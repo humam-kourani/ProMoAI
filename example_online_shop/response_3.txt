@@ -1,0 +1,36 @@
+```python
+from utils.model_generation import ModelGenerator
+gen = ModelGenerator()
+
+login = gen.activity('Login')
+add_items = gen.activity('Add items')  # Updated activity based on feedback
+set_payment_method = gen.activity('Set payment method')
+pay = gen.activity('Pay')
+complete_installment = gen.activity('Complete installment agreement')
+select_reward = gen.activity('Select free reward')
+deliver_items = gen.activity('Deliver items')
+return_items = gen.activity('Return items')
+
+# Modeling the repeated addition of items
+add_items_loop = gen.loop(do=add_items, redo=None)  # Allows for repeated item addition
+
+# Exclusive Choices
+payment_choice = gen.xor(pay, complete_installment)
+
+# Loop for Delivery and Return Process
+delivery_return_loop = gen.loop(do=deliver_items, redo=return_items)
+
+# Considering all dependencies at the same hierarchical level with the updated "add items" activity modeled as a loop
+final_dependencies = [
+    (login, add_items_loop),
+    (login, set_payment_method),
+    (add_items_loop, payment_choice),
+    (add_items_loop, select_reward),
+    (set_payment_method, payment_choice),
+    (payment_choice, delivery_return_loop),
+    (select_reward, delivery_return_loop)
+]
+
+# Generating the updated final model without violating the partial order directive
+final_model = gen.partial_order(dependencies=final_dependencies)
+```

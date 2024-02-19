@@ -1,0 +1,37 @@
+Given the error message and instructions, let's revise the process model to ensure that we do not create a partial order as a direct child of another partial order. We can incorporate all required de
+pendencies into a single partial order by combining the dependencies at the same hierarchical level, taking care to sequence activities correctly without violating the requirements.
+
+```python
+from utils.model_generation import ModelGenerator
+gen = ModelGenerator()
+
+login = gen.activity('Login')
+select_items = gen.activity('Select items')
+set_payment_method = gen.activity('Set payment method')
+pay = gen.activity('Pay')
+complete_installment = gen.activity('Complete installment agreement')
+select_reward = gen.activity('Select free reward')
+deliver_items = gen.activity('Deliver items')
+return_items = gen.activity('Return items')
+
+# Exclusive Choices
+payment_choice = gen.xor(pay, complete_installment)
+
+# Loop for Delivery and Return Process
+delivery_return_loop = gen.loop(do=deliver_items, redo=return_items)
+
+# Since the error was about direct children of partial orders, we simplify by reconsidering how we link our dependencies
+# Considering all dependencies at the same hierarchical level:
+final_dependencies = [
+    (login, select_items),
+    (login, set_payment_method),
+    (select_items, payment_choice),
+    (select_items, select_reward),
+    (set_payment_method, payment_choice),
+    (payment_choice, delivery_return_loop),
+    (select_reward, delivery_return_loop)
+]
+
+# Generating the updated final model without violating the partial order directive
+final_model = gen.partial_order(dependencies=final_dependencies)
+```
