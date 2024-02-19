@@ -1,3 +1,12 @@
+"""
+    This file includes example (description, model) pairs used for few-shots learning. Some process description are
+    from the PET data set "Patrizio Bellan, Han van der Aa, Mauro Dragoni, Chiara Ghidini, and Simone Paolo Ponzetto.
+    PET: an annotated dataset for process extraction from natural language text tasks. In Business Process Management
+    Workshops 2022, Revised Selected Papers, volume 460 of Lecture Notes in Business Information Processing,
+    pages 315–321. Springer, 2022".
+"""
+
+
 import pm4py
 from utils.petrinet.to_petri_net import apply as to_pn
 from utils.model_generation import ModelGenerator
@@ -315,61 +324,6 @@ def m7():
 
 e7 = "a common error for this process is to add a sequential dependency 'B -> C' since the text says that 'C' and 'D'" \
      " are concurrent. This conclusion is not justified and 'B' and 'C' can remain concurrent in the partial order."
-
-# d7 = "An employee purchases a product or service he requires. For instance , a sales person on a trip rents a car. " \
-#      "The employee submits an expense report with a list of items , along with the receipts for each item. A " \
-#      "supervisor reviews the expense report and approves or rejects the report. Since the company has expense rules , " \
-#      "there are circumstances where the supervisor can accept or reject the report upon first inspection. These rules " \
-#      "could be automated , to reduce the workload on the supervisor. If the supervisor rejects the report , " \
-#      "the employee , who submitted it , is given a chance to edit it , for example to correct errors or better " \
-#      "describe an expense. If the supervisor approves the report , it goes to the treasurer. The treasurer checks " \
-#      "that all the receipts have been submitted and match the items on the list. If all is in order , the treasurer " \
-#      "accepts the expenses for processing ( including , e.g., payment or refund , and accounting ). If receipts are " \
-#      "missing or do not match the report , he sends it back to the employee. If a report returns to the employee for " \
-#      "corrections , it must again go to a supervisor , even if the supervisor previously approved the report. If the " \
-#      "treasurer accepts the expenses for processing , the report moves to an automatic activity that links to a " \
-#      "payment system. The process waits for the payment confirmation. After the payment is confirmed , the process " \
-#      "ends . "
-#
-#
-# def m7():
-#     # Base activities
-#     purchase = 'Employee purchases product or service'
-#     submit_expense = 'Submit expense report with receipts'
-#     review_expense_initial = gen.xor('Initially approve report', 'Initially reject report')
-#     edit_report = 'Edit expense report'
-#     review_expense_after_edit = gen.xor('Approve report after edit', 'Reject report after edit')
-#     treasurer_review = gen.xor('Treasurer accepts expenses', 'Treasurer sends back for corrections')
-#     automatic_payment = 'Automatic activity for payment system'
-#     wait_payment_confirmation = 'Wait for payment confirmation'
-#     end_process = 'End process'
-#
-#     # Subprocess for editing and re-review after rejection at the initial review
-#     edit_and_initial_review = gen.partial_order(list_children=[edit_report, review_expense_initial],
-#                                     list_order_dependencies=[(edit_report, review_expense_initial)])
-#
-#     # Subprocess for editing and re-review after the treasurer sends it back for corrections
-#     edit_and_treasurer_review = gen.partial_order(list_children=[edit_report, review_expense_after_edit],
-#                                       list_order_dependencies=[(edit_report, review_expense_after_edit)])
-#
-#     # Combining treasurer review decision with possible loop back for corrections
-#     treasurer_decision = DoRedoLoop('Treasurer accepts expenses', edit_and_treasurer_review)
-#
-#     # Main process flow
-#     main_process_flow = gen.partial_order(
-#         list_children=[submit_expense, review_expense_initial, treasurer_decision, automatic_payment,
-#                        wait_payment_confirmation, end_process],
-#         list_order_dependencies=[(submit_expense, review_expense_initial),
-#                                  (review_expense_initial, treasurer_decision),
-#                                  (treasurer_decision, automatic_payment),
-#                                  (automatic_payment, wait_payment_confirmation),
-#                                  (wait_payment_confirmation, end_process)])
-#
-#     # Final model starts with the purchase and follows the main process flow
-#     final_model = gen.partial_order(list_children=[purchase, main_process_flow],
-#                         list_order_dependencies=[(purchase, main_process_flow)])
-#
-#     return final_model
 
 
 SHOTS_TOP_DOWN = [(d1, m1, e1), (d1_2, m1_2, e1_2), (d6, m6, e6), (d7, m7, e7)]

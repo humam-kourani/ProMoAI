@@ -1,3 +1,12 @@
+"""
+    This file includes example (description, model) pairs used for few-shots learning. Some process description are
+    from the PET data set "Patrizio Bellan, Han van der Aa, Mauro Dragoni, Chiara Ghidini, and Simone Paolo Ponzetto.
+    PET: an annotated dataset for process extraction from natural language text tasks. In Business Process Management
+    Workshops 2022, Revised Selected Papers, volume 460 of Lecture Notes in Business Information Processing,
+    pages 315–321. Springer, 2022".
+"""
+
+
 import pm4py
 from utils.petrinet.to_petri_net import apply as to_pn
 from utils.model_generation import ModelGenerator
