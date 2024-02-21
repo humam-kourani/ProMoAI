@@ -7,7 +7,7 @@ import_statement = 'from utils.model_generation import ModelGenerator'
 
 
 def add_role():
-    return "Your role: you are an expert in process model_generation," \
+    return "Your role: you are an expert in process modeling," \
            " familiar with various process languages and with common" \
            " process constructs such as exclusive choice, do-redo loops, and partial orders." \
            " Your task is to analyze the textual description of a process and transform it into a process model in" \
@@ -19,7 +19,7 @@ def add_role():
 
 
 def add_knowledge():
-    return "Use the following knowledge about the POWL process model_generation language:\n" \
+    return "Use the following knowledge about the POWL process modeling language:\n" \
            "A partial order is binary relation that is irreflexive, transitive, and asymmetry." \
            " A POWL model is a hierarchical model. POWL models are recursively generated" \
            " by combining submodels into a new model either using an operator (xor or loop)" \
@@ -67,7 +67,7 @@ def add_least_to_most():
            " can also use loop to model a self-loop by setting the redo part to None; i.e., to indicate that the do part" \
            " can be repeated from 1 to as many times as possible. You can also model a skippable self-loop by" \
            " setting the do part to None instead; i.e., to indicate that the redo part can be repeated from 0 to" \
-           " as many times as possible. Self loops (both skippable or unskippable) are important for model_generation cyclic" \
+           " as many times as possible. Self loops (both skippable or unskippable) are important for modeling cyclic" \
            " behavior. For example, you can use a self-loop to model that in a complicated process you can go back" \
            " to certain initial stage: first you model the complicated process, then you put it inside a loop.\n" \
            " - partial_order(dependencies) takes 1 argument, which is a list of tuples of submodels. These tuples" \
@@ -173,4 +173,5 @@ def update_conversation(conversation: List[dict[str:str]], feedback: str) -> Lis
                     "feedback comment as well. Make sure to save the updated final model is the variable" \
                     " 'final_model'. This is the new feedback comment:" + feedback
     conversation.append({"role": "user", "content": f'{update_prompt}'})
+    print(update_prompt)
     return conversation

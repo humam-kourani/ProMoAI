@@ -192,7 +192,7 @@ def m5():
 e5 = "a common error for this process is to create partial orders for some subprocesses, then trying to add a" \
      " partial order as a child of another partial order. Another very important error you should avoid is to" \
      " create a local choice between 'cancel' and some local activity (e.g., 'continue process') instead of" \
-     " model_generation a choice between 'cancel' and the rest of the process."
+     " modeling a choice between 'cancel' and the rest of the process."
 
 d6 = "A small company manufactures customized bicycles. Whenever the sales department receives an order , " \
      "a new process instance is created. A member of the sales department can then reject or accept the order " \
@@ -242,7 +242,7 @@ def m6():
 
 e6 = "a common error for this process is to" \
      " create a local choice between 'reject_order' and 'accept_order' instead of" \
-     " model_generation a choice between 'reject_order' and the complete complex subprocess that is executed in case" \
+     " modeling a choice between 'reject_order' and the complete complex subprocess that is executed in case" \
      " the order is accepted ('accept_poset'). This is a very important process construct where you should model" \
      " a choice between full paths and not mistakenly model a choice between the entry point of the paths. Although" \
      " the text says there is a choice between accepting or rejecting the order, you should derive from your" \
@@ -265,7 +265,7 @@ def m7():
     return final_model
 
 
-e7 = "a common error for this process is to generate a first partial order for model_generation the concurrency between" \
+e7 = "a common error for this process is to generate a first partial order for modeling the concurrency between" \
      " 'A' and 'B', then a second partial order to model the concurrency between 'C' and 'D', then combining these" \
      " two partial orders with a large partial that has a sequential dependency from the first order to the second" \
      " one. This behavior is not justified and it will imply a wrong dependency ('B' -> 'C'); 'B' and 'C' should" \
