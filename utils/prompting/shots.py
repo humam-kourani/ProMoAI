@@ -243,13 +243,10 @@ def m6():
 e6 = "a common error for this process is to" \
      " create a local choice between 'reject_order' and 'accept_order' instead of" \
      " modeling a choice between 'reject_order' and the complete complex subprocess that is executed in case" \
-     " the order is accepted ('accept_poset'). This is a very important process construct where you should model" \
-     " a choice between full paths and not mistakenly model a choice between the entry point of the paths. Although" \
+     " the order is accepted ('accept_poset'). Although" \
      " the text says there is a choice between accepting or rejecting the order, you should derive from your" \
      " understanding of the context that this choice also includes all activities that are executed after accepting" \
-     " an order. It does not make sense to model a choice between accept and reject the order and make the rest of" \
-     " the process independent of this choice! The choice must be modeled on a higher lever: an xor between the full" \
-     " path taken in case the order is accepted and the full path taken in case the order is rejected."
+     " an order."
 
 d7 = "A and B can happen in any order (concurrent). C and D can happen in any order. A precedes both C and D. B " \
      "precedes D"
