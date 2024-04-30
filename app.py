@@ -26,11 +26,6 @@ def run_app():
         "Process Model Generator with Generative AI"
     )
 
-    st.markdown(textwrap.dedent("""
-        [![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?logo=linkedin&logoColor=white&labelColor=101010)](www.linkedin.com/in/humam-kourani-98b342232)
-        [![Email](https://img.shields.io/badge/Email-me-green?style=flat&logo=minutemailer&logoColor=white&labelColor=gray)](mailto:humam.kourani@fit.fraunhofer.de)
-    """), unsafe_allow_html=True)
-
     with st.form(key='model_gen_form'):
         col1, col2 = st.columns(2)
 
@@ -124,6 +119,10 @@ def run_app():
         except Exception as e:
             st.error(icon='⚠', body=str(e))
 
+    st.markdown(textwrap.dedent("""
+        [![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?logo=linkedin&logoColor=white&labelColor=101010)](https://www.linkedin.com/in/humam-kourani-98b342232/)
+        [![Email](https://img.shields.io/badge/Email-me-green?style=flat&logo=minutemailer&logoColor=white&labelColor=gray)](mailto:humam.kourani@fit.fraunhofer.de)
+    """), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     st.set_page_config(
