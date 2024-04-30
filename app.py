@@ -1,6 +1,7 @@
 import subprocess
 
 import streamlit as st
+import textwrap 
 
 from utils import LLMProcessModelGenerator
 from utils.petrinet.to_petri_net import apply as powl_to_pn
