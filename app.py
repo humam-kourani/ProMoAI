@@ -120,7 +120,6 @@ def run_app():
             st.error(icon='⚠', body=str(e))
 
     st.markdown("---")
-    st.markdown("---")
     
     st.markdown(textwrap.dedent("""
         [![LinkedIn](https://img.shields.io/badge/Humam%20Kourani-gray?logo=linkedin&labelColor=blue)](https://www.linkedin.com/in/humam-kourani-98b342232/)
