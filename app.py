@@ -25,7 +25,7 @@ def run_app():
         "Process Model Generator with Generative AI"
     )
 
-    t.markdown(textwrap.dedent("""\
+    t.markdown(textwrap.dedent("""
         [![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?logo=linkedin&logoColor=white&labelColor=101010)](www.linkedin.com/in/humam-kourani-98b342232)
         [![Email](https://img.shields.io/badge/Email-me-green?style=flat&logo=minutemailer&logoColor=white&labelColor=gray)](mailto:humam.kourani@fit.fraunhofer.de)
     """))
