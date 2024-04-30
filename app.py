@@ -119,6 +119,9 @@ def run_app():
         except Exception as e:
             st.error(icon='⚠', body=str(e))
 
+    st.markdown("---")
+    st.markdown("---")
+    
     st.markdown(textwrap.dedent("""
         [![LinkedIn](https://img.shields.io/badge/Humam%20Kourani-gray?logo=linkedin&labelColor=blue)](https://www.linkedin.com/in/humam-kourani-98b342232/)
         [![Email](https://img.shields.io/badge/Email-gray?logo=minutemailer&logoColor=white&labelColor=green)](mailto:humam.kourani@fit.fraunhofer.de)
