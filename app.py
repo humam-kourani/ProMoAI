@@ -122,6 +122,8 @@ def run_app():
     st.markdown(textwrap.dedent("""
         [![LinkedIn](https://img.shields.io/badge/Humam%20Kourani-gray?logo=linkedin&labelColor=blue)](https://www.linkedin.com/in/humam-kourani-98b342232/)
         [![Email](https://img.shields.io/badge/Email-gray?logo=minutemailer&logoColor=white&labelColor=green)](mailto:humam.kourani@fit.fraunhofer.de)
+    """), unsafe_allow_html=True)
+    st.markdown(textwrap.dedent("""
         [![Paper](https://img.shields.io/badge/ProMoAI:%20Process%20Modeling%20with%20Generative%20AI-gray?logo=adobeacrobatreader&labelColor=red)](https://arxiv.org/abs/2403.04327)
     """), unsafe_allow_html=True)
 
