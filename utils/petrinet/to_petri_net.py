@@ -23,7 +23,7 @@ import pm4py.objects.conversion.process_tree.variants.to_petri_net as pt_to_pn
 from pm4py.objects.petri_net.obj import Marking
 from pm4py.objects.petri_net.obj import PetriNet
 from pm4py.objects.petri_net.utils.petri_utils import add_arc_from_to, remove_place
-from utils.powl.obj import Transition, SilentTransition, StrictPartialOrder, OperatorPOWL, FrequentTransition
+from pm4py.objects.powl.obj import Transition, SilentTransition, StrictPartialOrder, OperatorPOWL, FrequentTransition
 from pm4py.objects.petri_net.utils import reduction
 from pm4py.objects.process_tree.obj import Operator
 

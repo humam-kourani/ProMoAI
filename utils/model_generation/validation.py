@@ -1,4 +1,4 @@
-from utils.powl import StrictPartialOrder, Transition, SilentTransition, POWL
+from pm4py.objects.powl.obj import StrictPartialOrder, Transition, SilentTransition, POWL
 from typing import List as TList, Union
 
 

@@ -1,4 +1,4 @@
-from utils.powl import Transition, SilentTransition, StrictPartialOrder, OperatorPOWL, Operator, POWL
+from pm4py.objects.powl.obj import Transition, SilentTransition, StrictPartialOrder, OperatorPOWL, Operator, POWL
 
 
 # def check_frequency(model, optional, repeatable):
