@@ -4,10 +4,10 @@ import streamlit as st
 import textwrap 
 
 from utils import LLMProcessModelGenerator
-from utils.petrinet.to_petri_net import apply as powl_to_pn
+from pm4py.objects.conversion.powl.variants.to_petri_net import apply as powl_to_pn
 
 from pm4py.util import constants
-from utils.petrinet.pnml import export_petri_as_string
+from pm4py.objects.petri_net.exporter.variants.pnml import export_petri_as_string
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
 from pm4py.visualization.bpmn import visualizer as bpmn_visualizer
 from pm4py.objects.conversion.wf_net.variants.to_bpmn import apply as pn_to_bpmn

@@ -8,7 +8,7 @@
 
 
 import pm4py
-from utils.petrinet.to_petri_net import apply as to_pn
+from pm4py.objects.conversion.powl.variants.to_petri_net import apply as to_pn
 from utils.model_generation import ModelGenerator
 
 d1 = "in this process, you can either do 'a' or 'b'. If 'a' is selected," \
