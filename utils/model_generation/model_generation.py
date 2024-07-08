@@ -17,10 +17,11 @@ def extract_model_from_response(response: str, iteration: int) -> POWL:
     return result
 
 
-def generate_model(conversation: List[dict[str:str]], api_key: str, openai_model: str) \
+def generate_model(conversation: List[dict[str:str]], api_key: str, openai_model: str, api_url: str) \
         -> tuple[POWL, List[dict[str:str]]]:
     return generate_result_with_error_handling(conversation=conversation,
                                                extraction_function=extract_model_from_response,
                                                api_key=api_key,
                                                openai_model=openai_model,
+                                               api_url=api_url,
                                                max_iterations=5)

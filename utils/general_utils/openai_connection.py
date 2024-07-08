@@ -8,11 +8,12 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
                                         extraction_function: Callable[[str, Any], T],
                                         api_key: str,
                                         openai_model: str,
+                                        api_url: str,
                                         max_iterations=5) \
         -> tuple[T, List[dict[str:str]]]:
     error_history = []
     for iteration in range(max_iterations):
-        response = generate_response_with_history(conversation, api_key, openai_model)
+        response = generate_response_with_history(conversation, api_key, openai_model, api_url)
 
         try:
             conversation.append({"role": "system", "content": response})
@@ -33,7 +34,7 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
                     " iterations! This is the error history: " + str(error_history))
 
 
-def generate_response_with_history(conversation_history, api_key, openai_model) -> str:
+def generate_response_with_history(conversation_history, api_key, openai_model, api_url) -> str:
     """
     Generates a response from the LLM using the conversation history.
 
@@ -51,19 +52,18 @@ def generate_response_with_history(conversation_history, api_key, openai_model) 
     for message in conversation_history:
         messages_payload.append({
             "role": message["role"],
-            "content": [
-                {
-                    "type": "text",
-                    "text": message["content"]
-                }
-            ]
+            "content": message["content"]
         })
 
     payload = {
         "model": openai_model,
-        "messages": messages_payload,
+        "messages": messages_payload
     }
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload).json()
+
+    if api_url.endswith("/"):
+        api_url = api_url[:-1]
+
+    response = requests.post(api_url+"/chat/completions", headers=headers, json=payload).json()
 
     try:
         return response["choices"][0]["message"]["content"]

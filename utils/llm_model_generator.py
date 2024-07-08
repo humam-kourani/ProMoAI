@@ -5,13 +5,15 @@ from pm4py.util import constants
 
 class LLMProcessModelGenerator(object):
     def __init__(self, process_description: str, api_key: str,
-                 openai_model: str = "gpt-3.5-turbo-0125"):  # gpt-4-0125-preview gpt-3.5-turbo-0125
+                 openai_model: str = "gpt-3.5-turbo-0125", api_url: str = "https://api.openai.com/v1"):  # gpt-4-0125-preview gpt-3.5-turbo-0125
+        self.__api_url = api_url
         self.__api_key = api_key
         self.__openai_model = openai_model
         init_conversation = create_conversation(process_description)
         self.__process_model, self.__conversation = generate_model(init_conversation,
                                                                    api_key=self.__api_key,
-                                                                   openai_model=self.__openai_model)
+                                                                   openai_model=self.__openai_model,
+                                                                   api_url=self.__api_url)
 
     def __to_petri_net(self):
         from pm4py.objects.conversion.powl.converter import apply as powl_to_pn
@@ -33,7 +35,8 @@ class LLMProcessModelGenerator(object):
         self.__conversation = update_conversation(self.__conversation, feedback)
         self.__process_model, self.__conversation = generate_model(conversation=self.__conversation,
                                                                    api_key=self.__api_key,
-                                                                   openai_model=self.__openai_model)
+                                                                   openai_model=self.__openai_model,
+                                                                   api_url=self.__api_url)
 
     def view_bpmn(self, image_format: str = "svg"):
         bpmn_model = self.get_bpmn()
