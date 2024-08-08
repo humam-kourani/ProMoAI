@@ -126,7 +126,7 @@ def run_app():
         [![Email](https://img.shields.io/badge/Email-gray?logo=minutemailer&logoColor=white&labelColor=green)](mailto:humam.kourani@fit.fraunhofer.de)
     """), unsafe_allow_html=True)
     st.markdown(textwrap.dedent("""
-        [![Paper](https://img.shields.io/badge/ProMoAI:%20Process%20Modeling%20with%20Generative%20AI-gray?logo=adobeacrobatreader&labelColor=red)](https://arxiv.org/abs/2403.04327)
+        [![Paper](https://img.shields.io/badge/ProMoAI:%20Process%20Modeling%20with%20Generative%20AI-gray?logo=adobeacrobatreader&labelColor=red)](https://doi.org/10.24963/ijcai.2024/1014)
     """), unsafe_allow_html=True)
 
 if __name__ == "__main__":
