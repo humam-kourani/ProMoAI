@@ -1,7 +1,7 @@
 import subprocess
 
 import streamlit as st
-import textwrap 
+import textwrap
 
 from utils import LLMProcessModelGenerator
 from pm4py.objects.conversion.powl.variants.to_petri_net import apply as powl_to_pn
@@ -26,22 +26,62 @@ def run_app():
         "Process Model Generator with Generative AI"
     )
 
+    model_defaults = {
+        'Google': 'gemini-1.5-pro',
+        'OpenAI': 'gpt-4',
+        'Deepinfra': 'meta-llama/Llama-3.2-90B-Vision-Instruct'
+    }
+
+    model_help = {
+        'Google': "Enter a Google model name. You can get a **free Google API key** and check the latest models under: https://ai.google.dev/.",
+        'OpenAI': "Enter an OpenAI model name. You can get an OpenAI API key and check the latest models under: https://openai.com/pricing.",
+        'Deepinfra': "Enter a model name available through Deepinfra. DeepInfra supports popular open-source large language models like Meta's LLaMa and Mistral, and it also enables custom model deployment. You can get a Deepinfra API key and check the latest models under: https://deepinfra.com/models."
+    }
+
+    if 'provider' not in st.session_state:
+        st.session_state['provider'] = 'Google'
+
+    if 'model_name' not in st.session_state:
+        st.session_state['model_name'] = model_defaults[st.session_state['provider']]
+
+    def update_model_name():
+        if 'model_gen' in st.session_state:
+            st.session_state.pop('model_gen')
+        st.session_state['model_name'] = model_defaults[st.session_state['provider']]
+
+    provider = st.radio(
+        "Choose AI Provider:",
+        options=model_defaults.keys(),
+        index=0,
+        horizontal=True,
+        help="Select the AI provider you'd like to use. Google offers the Gemini models, which you can **try for free**,"
+             " while OpenAI provides GPT models. DeepInfra supports popular open-source large language models like"
+             " Meta's LLaMa and Mistral, and also enables custom model deployment.",
+        on_change=update_model_name,
+        key='provider',
+    )
+
+    if 'model_name' not in st.session_state or st.session_state['provider'] != provider:
+        st.session_state['model_name'] = model_defaults[provider]
+
     with st.form(key='model_gen_form'):
+
         col1, col2 = st.columns(2)
 
         with col1:
-            open_ai_model = st.text_input("Enter the OpenAI model name:", value="gpt-4",
-                                          help="You can check the latest models under: https://openai.com/pricing")
+            open_ai_model = st.text_input("Enter the AI model name:",
+                                          key='model_name',
+                                          help=model_help[st.session_state['provider']])
 
         with col2:
-            api_key = st.text_input("Enter your OpenAI API key:", type="password")
+            api_key = st.text_input("Enter your API key:", type="password")
 
         description = st.text_area("Enter the process description:")
         submit_button = st.form_submit_button(label='Run')
 
     if submit_button:
         try:
-            st.session_state['model_gen'] = LLMProcessModelGenerator(description, api_key, open_ai_model)
+            st.session_state['model_gen'] = LLMProcessModelGenerator(description, api_key, open_ai_model, provider)
             st.session_state['feedback'] = []
         except Exception as e:
             st.error(body=str(e), icon="⚠️")
@@ -120,7 +160,7 @@ def run_app():
             st.error(icon='⚠', body=str(e))
 
     st.markdown("\n\n")
-    
+
     st.markdown(textwrap.dedent("""
         [![LinkedIn](https://img.shields.io/badge/Humam%20Kourani-gray?logo=linkedin&labelColor=blue)](https://www.linkedin.com/in/humam-kourani-98b342232/)
         [![Email](https://img.shields.io/badge/Email-gray?logo=minutemailer&logoColor=white&labelColor=green)](mailto:humam.kourani@fit.fraunhofer.de)
@@ -128,6 +168,7 @@ def run_app():
     st.markdown(textwrap.dedent("""
         [![Paper](https://img.shields.io/badge/ProMoAI:%20Process%20Modeling%20with%20Generative%20AI-gray?logo=adobeacrobatreader&labelColor=red)](https://doi.org/10.24963/ijcai.2024/1014)
     """), unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     st.set_page_config(
