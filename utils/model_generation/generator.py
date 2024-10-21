@@ -15,7 +15,7 @@ from pm4py.objects.powl.obj import Transition, SilentTransition, StrictPartialOr
 
 
 class ModelGenerator:
-    def __init__(self, enable_nested_partial_orders=False, copy_duplicates=False):
+    def __init__(self, enable_nested_partial_orders=True, copy_duplicates=False):
         self.used_as_submodel = []
         self.nested_partial_orders = enable_nested_partial_orders
         self.copy_duplicates = copy_duplicates
