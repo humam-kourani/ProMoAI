@@ -7,7 +7,7 @@ from pm4py.objects.powl.obj import POWL
 
 
 def extract_model_from_response(response: str, iteration: int) -> POWL:
-    if iteration > 1:
+    if iteration > 3:
         response = response.replace('ModelGenerator()', 'ModelGenerator(True, True)')
     extracted_code = extract_final_python_code(response)
     variable_name = 'final_model'
