@@ -1,3 +1,4 @@
+import pm4py
 from pm4py.objects.powl.obj import Transition, SilentTransition, StrictPartialOrder, OperatorPOWL, Operator, POWL
 
 
@@ -14,6 +15,22 @@ from pm4py.objects.powl.obj import Transition, SilentTransition, StrictPartialOr
 #             return model
 
 
+def get_node_type(node):
+    if node.__class__ is pm4py.objects.powl.obj.Transition:
+        return f"Activity ({node.label})"
+    elif node.__class__ is pm4py.objects.powl.obj.StrictPartialOrder:
+        return "PartialOrder"
+    elif node.__class__ is pm4py.objects.powl.obj.OperatorPOWL:
+        if node.operator is Operator.XOR:
+            return "XOR"
+        elif node.operator is Operator.LOOP:
+            return "LOOP"
+        else:
+            return node.operator.value
+    else:
+        return node.__class__
+
+
 class ModelGenerator:
     def __init__(self, enable_nested_partial_orders=True, copy_duplicates=False):
         self.used_as_submodel = []
@@ -23,6 +40,9 @@ class ModelGenerator:
 
     def activity(self, label):
         return Transition(label)
+
+    def silent_transition(self):
+        return SilentTransition()
 
     def create_model(self, node: POWL, parent_type):
         if node is None:
@@ -42,10 +62,11 @@ class ModelGenerator:
                     #                 f" Within the children of the this {parent_type} construct, you are trying to"
                     #                 f" reuse submodels that were used as children of other constructs (xor, loop,"
                     #                 f" or partial_order) before!")
+                    node_type = get_node_type(node)
                     raise Exception(f"Ensure that"
                                     f" each submodel is used uniquely! Avoid trying to"
                                     f" reuse submodels that were used as children of other constructs (xor, loop,"
-                                    f" or partial_order) before!")
+                                    f" or partial_order) before! The error occured when trying to reuse a node of type {node_type}.")
             else:
                 res = node
         self.used_as_submodel.append(res)
@@ -78,8 +99,10 @@ class ModelGenerator:
             else:
                 raise Exception('Invalid dependencies for the partial order! You should provide a list that contains'
                                 ' tuples of POWL models!')
-        if len(list_children) < 2:
-            raise Exception("Cannot create a partial order over less than 2 submodels!")
+        if len(list_children) == 1:
+            return list_children[0]
+        if len(list_children) == 0:
+            raise Exception("Cannot create a partial order over 0 submodels!")
         children = dict()
         for child in list_children:
             new_child = self.create_model(child, "'gen.partial_order'")
