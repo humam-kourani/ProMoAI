@@ -29,13 +29,17 @@ def run_app():
     model_defaults = {
         'Google': 'gemini-1.5-pro',
         'OpenAI': 'gpt-4',
-        'Deepinfra': 'meta-llama/Llama-3.2-90B-Vision-Instruct'
+        'Anthropic': 'claude-3-5-sonnet',
+        'Deepinfra': 'meta-llama/Llama-3.2-90B-Vision-Instruct',
+        'Mistral AI': 'mistral-large-latest'
     }
 
     model_help = {
         'Google': "Enter a Google model name. You can get a **free Google API key** and check the latest models under: https://ai.google.dev/.",
         'OpenAI': "Enter an OpenAI model name. You can get an OpenAI API key and check the latest models under: https://openai.com/pricing.",
-        'Deepinfra': "Enter a model name available through Deepinfra. DeepInfra supports popular open-source large language models like Meta's LLaMa and Mistral, and it also enables custom model deployment. You can get a Deepinfra API key and check the latest models under: https://deepinfra.com/models."
+        'Anthropic': "Enter an Anthropic model name. You can get an Anthropic API key and check the latest models under: https://www.anthropic.com/api.",
+        'Deepinfra': "Enter a model name available through Deepinfra. DeepInfra supports popular open-source large language models like Meta's LLaMa and Mistral, and it also enables custom model deployment. You can get a Deepinfra API key and check the latest models under: https://deepinfra.com/models.",
+        'Mistral AI': "Enter a Mistral AI model name. You can get a Mistral AI API key and check the latest models under: https://mistral.ai/."
     }
 
     if 'provider' not in st.session_state:
@@ -55,8 +59,8 @@ def run_app():
         index=0,
         horizontal=True,
         help="Select the AI provider you'd like to use. Google offers the Gemini models, which you can **try for free**,"
-             " while OpenAI provides GPT models. DeepInfra supports popular open-source large language models like"
-             " Meta's LLaMa and Mistral, and also enables custom model deployment.",
+             " while OpenAI provides GPT models and Anthropic provides Claude models. DeepInfra supports popular open-source large language models like"
+             " Meta's LLaMa and also enables custom model deployment.",
         on_change=update_model_name,
         key='provider',
     )
