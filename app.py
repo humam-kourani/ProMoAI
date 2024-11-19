@@ -29,7 +29,7 @@ def run_app():
     model_defaults = {
         'Google': 'gemini-1.5-pro',
         'OpenAI': 'gpt-4',
-        'Anthropic': 'claude-3-5-sonnet',
+        'Anthropic': 'claude-3-5-sonnet-latest',
         'Deepinfra': 'meta-llama/Llama-3.2-90B-Vision-Instruct',
         'Mistral AI': 'mistral-large-latest'
     }
