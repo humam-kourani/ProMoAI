@@ -1,6 +1,7 @@
 from typing import Callable, List, TypeVar, Any
 import requests
 import google.generativeai as genai
+import anthropic
 
 T = TypeVar('T')
 
