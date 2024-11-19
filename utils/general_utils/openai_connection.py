@@ -16,13 +16,13 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
     for iteration in range(max_iterations):
         if api_url == "Google":
             response = generate_response_with_history_google(conversation, api_key, openai_model)
+        elif api_url == "Anthropic":
+            response = generate_response_with_history_anthropic(conversation, api_key, openai_model)
         else:
             if api_url == "Deepinfra":
                 api_url = "https://api.deepinfra.com/v1/openai"
             elif api_url == "OpenAI":
                 api_url = "https://api.openai.com/v1"
-            elif api_url == "Anthropic":
-                api_url = "https://api.anthropic.com/v1/messages"
             elif api_url == "Mistral AI":
                 api_url = "https://api.mistral.ai/v1/"
             response = generate_response_with_history(conversation, api_key, openai_model, api_url)
@@ -102,3 +102,17 @@ def generate_response_with_history_google(conversation_history, api_key, google_
         return response.text
     except Exception as e:
         raise Exception("Connection failed! This is the error: " + str(e))
+
+def generate_response_with_history_anthropic(conversation, api_key, llm_name):
+    client = anthropic.Anthropic(
+        api_key=api_key,
+    )
+    message = client.messages.create(
+        model=llm_name,
+        max_tokens=8192,
+        messages=conversation
+    )
+    try:
+        return message.content[0].text
+    except Exception as e:
+        raise Exception("Connection failed! This is the response: " + str(message))
