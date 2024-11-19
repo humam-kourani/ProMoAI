@@ -21,6 +21,10 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
                 api_url = "https://api.deepinfra.com/v1/openai"
             elif api_url == "OpenAI":
                 api_url = "https://api.openai.com/v1"
+            elif api_url == "Anthropic":
+                api_url = "https://api.anthropic.com/v1/messages"
+            elif api_url == "Mistral AI":
+                api_url = "https://api.mistral.ai/v1/"
             response = generate_response_with_history(conversation, api_key, openai_model, api_url)
 
         try:
