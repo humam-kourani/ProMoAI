@@ -148,8 +148,9 @@ def create_model_generation_prompt(process_description: str) -> str:
 
 def create_conversation(process_description: str) -> List[dict[str:str]]:
     prompt = create_model_generation_prompt(process_description)
-    conversation = [{"role": "user", "content": f'{prompt}'}]
     print(prompt)
+    conversation = [{"role": "user", "content": f'{prompt}'}]
+    #conversation = [{"role": "system", "content": "You are a helpful and harmless assistant."}] + conversation
     return conversation
 
 

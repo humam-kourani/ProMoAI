@@ -1,7 +1,6 @@
 from typing import Callable, List, TypeVar, Any
 import requests
-import google.generativeai as genai
-import anthropic
+
 
 T = TypeVar('T')
 
@@ -16,8 +15,10 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
     error_history = []
     for iteration in range(max_iterations):
         if api_url == "Google":
+            import google.generativeai as genai
             response = generate_response_with_history_google(conversation, api_key, openai_model)
         elif api_url == "Anthropic":
+            import anthropic
             response = generate_response_with_history_anthropic(conversation, api_key, openai_model)
         else:
             if api_url == "Deepinfra":
@@ -29,7 +30,7 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
             response = generate_response_with_history(conversation, api_key, openai_model, api_url)
 
         try:
-            conversation.append({"role": "system", "content": response})
+            conversation.append({"role": "assistant", "content": response})
             print(response)
             result = extraction_function(response, iteration)
             return result, conversation  # Break loop if execution is successful
@@ -72,6 +73,8 @@ def generate_response_with_history(conversation_history, api_key, openai_model, 
         "model": openai_model,
         "messages": messages_payload
     }
+
+    #payload["temperature"] = 0.1
 
     if api_url.endswith("/"):
         api_url = api_url[:-1]
