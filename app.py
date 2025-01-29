@@ -1,6 +1,8 @@
 import os
+import shutil
 import subprocess
 import streamlit as st
+import tempfile
 
 import pm4py
 from pm4py.algo.discovery.powl.inductive.variants.powl_discovery_varaints import POWLDiscoveryVariant
@@ -46,6 +48,8 @@ def run_app():
         AIProviders.DEEPINFRA.value: "Enter a model name available through Deepinfra. DeepInfra supports popular open-source large language models like Meta's LLaMa and Mistral, and it also enables custom model deployment. You can get a Deepinfra API key and check the latest models under: https://deepinfra.com/models.",
         AIProviders.MISTRAL_AI.value: "Enter a Mistral AI model name. You can get a Mistral AI API key and check the latest models under: https://mistral.ai/."
     }
+
+    temp_dir = "temp"
 
     if 'provider' not in st.session_state:
         st.session_state['provider'] = AIProviders.GOOGLE.value
@@ -144,13 +148,13 @@ def run_app():
                     return
                 try:
                     contents = uploaded_log.read()
-                    temp_file_name = "temp_" + uploaded_log.name
-                    temp_file = open(temp_file_name, "wb")
-                    temp_file.write(contents)
-                    temp_file.close()
+                    os.makedirs(temp_dir, exist_ok=True)
+                    with tempfile.NamedTemporaryFile(mode="wb", delete=False,
+                                                     dir=temp_dir, suffix=uploaded_log.name) as temp_file:
+                        temp_file.write(contents)
+                        log = pm4py.read_xes(temp_file.name)
+                    shutil.rmtree(temp_dir, ignore_errors=True)
 
-                    log = pm4py.read_xes(temp_file_name)
-                    os.remove(temp_file_name)
                     powl = pm4py.discover_powl(log, variant=POWLDiscoveryVariant.MAXIMAL)
                     obj = llm_model_generator.initialize(None, api_key=api_key,
                                                          powl_model=powl, llm_name=ai_model_name,
@@ -159,6 +163,7 @@ def run_app():
                     st.session_state['model_gen'] = obj
                     st.session_state['feedback'] = []
                 except Exception as e:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
                     st.error(body=f"Error during discovery: {e}", icon="⚠️")
                     return
         elif input_type == InputType.MODEL.value:
@@ -178,19 +183,25 @@ def run_app():
 
                         if file_extension == "bpmn":
                             contents = uploaded_file.read()
-                            F = open("temp.bpmn", "wb")
-                            F.write(contents)
-                            F.close()
-                            bpmn_graph = pm4py.read_bpmn("temp.bpmn")
-                            os.remove("temp.bpmn")
-                            pn, im, fm = pm4py.convert_to_petri_net(bpmn_graph)
+
+                            os.makedirs(temp_dir, exist_ok=True)
+                            with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".bpmn",
+                                                             dir=temp_dir) as temp_file:
+                                temp_file.write(contents)
+                                bpmn_graph = pm4py.read_bpmn(temp_file.name)
+                                pn, im, fm = pm4py.convert_to_petri_net(bpmn_graph)
+                            shutil.rmtree(temp_dir, ignore_errors=True)
+
                         elif file_extension == "pnml":
                             contents = uploaded_file.read()
-                            F = open("temp.pnml", "wb")
-                            F.write(contents)
-                            F.close()
-                            pn, im, fm = pm4py.read_pnml("temp.pnml")
-                            os.remove("temp.pnml")
+
+                            os.makedirs(temp_dir, exist_ok=True)
+                            with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".bpmn",
+                                                             dir=temp_dir) as temp_file:
+                                temp_file.write(contents)
+                                pn, im, fm = pm4py.read_pnml("temp.pnml")
+                            shutil.rmtree(temp_dir, ignore_errors=True)
+
                         else:
                             st.error(body=f"Unsupported file format {file_extension}!", icon="⚠️")
                             return
@@ -208,6 +219,8 @@ def run_app():
                         st.session_state['model_gen'] = obj
                         st.session_state['feedback'] = []
                     except Exception as e:
+                        if os.path.exists(temp_dir):
+                            shutil.rmtree(temp_dir, ignore_errors=True)
                         st.error(body="Please upload a block-structured model!", icon="⚠️")
                         return
 
