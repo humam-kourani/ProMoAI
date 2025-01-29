@@ -58,8 +58,8 @@ def run_app():
         st.session_state['model_name'] = model_defaults[st.session_state['provider']]
 
     def update_model_name():
-        if 'model_gen' in st.session_state:
-            st.session_state.pop('model_gen')
+        # if 'model_gen' in st.session_state:
+        #     st.session_state.pop('model_gen')
         st.session_state['model_name'] = model_defaults[st.session_state['provider']]
 
     with st.expander("🔧 Configuration", expanded=True):
