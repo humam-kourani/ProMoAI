@@ -1,0 +1,3 @@
+[submodule "libs/pn-to-powl"]
+	path = libs/pn-to-powl
+	url = https://github.com/humam-kourani/WF-net-to-POWL.git
