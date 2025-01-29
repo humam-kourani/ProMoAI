@@ -1,11 +1,8 @@
 import subprocess
-
 import streamlit as st
 import textwrap
 
-from utils import LLMProcessModelGenerator
 from pm4py.objects.conversion.powl.variants.to_petri_net import apply as powl_to_pn
-
 from pm4py.util import constants
 from pm4py.objects.petri_net.exporter.variants.pnml import export_petri_as_string
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
@@ -14,6 +11,8 @@ from pm4py.objects.conversion.wf_net.variants.to_bpmn import apply as pn_to_bpmn
 from pm4py.objects.bpmn.layout import layouter
 from pm4py.objects.bpmn.exporter.variants.etree import get_xml_string
 
+from utils import LLMProcessModelGenerator
+from utils.app_utils import InputType, ViewType, footer
 
 def run_model_generator_app():
     subprocess.run(['streamlit', 'run', __file__])
@@ -163,20 +162,11 @@ def run_app():
         except Exception as e:
             st.error(icon='⚠', body=str(e))
 
-    st.markdown("\n\n")
-
-    st.markdown(textwrap.dedent("""
-        [![LinkedIn](https://img.shields.io/badge/Humam%20Kourani-gray?logo=linkedin&labelColor=blue)](https://www.linkedin.com/in/humam-kourani-98b342232/)
-        [![Email](https://img.shields.io/badge/Email-gray?logo=minutemailer&logoColor=white&labelColor=green)](mailto:humam.kourani@fit.fraunhofer.de)
-    """), unsafe_allow_html=True)
-    st.markdown(textwrap.dedent("""
-        [![Paper](https://img.shields.io/badge/ProMoAI:%20Process%20Modeling%20with%20Generative%20AI-gray?logo=adobeacrobatreader&labelColor=red)](https://doi.org/10.24963/ijcai.2024/1014)
-    """), unsafe_allow_html=True)
-
 
 if __name__ == "__main__":
     st.set_page_config(
         page_title="ProMoAI",
         page_icon="🤖"
     )
+    footer()
     run_app()
