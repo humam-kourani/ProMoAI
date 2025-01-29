@@ -2,6 +2,7 @@ from pm4py.objects.powl.obj import POWL
 
 from utils.prompting import create_conversation, update_conversation
 from utils.model_generation.model_generation import generate_model, extract_model_from_response
+from utils.model_generation import code_extraction
 from pm4py.util import constants
 from copy import deepcopy
 from typing import Optional
@@ -41,6 +42,12 @@ class LLMProcessModelGenerator(object):
         from pm4py.objects.conversion.powl.converter import apply as powl_to_pn
         net, im, fm = powl_to_pn(self.process_model)
         return net, im, fm
+
+    def get_conversation(self):
+        return self.__conversation
+
+    def get_code(self):
+        return code_extraction.extract_final_python_code(self.__conversation[-1]["content"])
 
     def get_powl(self):
         return self.process_model
