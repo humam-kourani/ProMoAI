@@ -9,9 +9,9 @@ class InputType(Enum):
 
 
 class ViewType(Enum):
-    PETRI = "Petri Net"
     BPMN = "BPMN"
     POWL = "POWL"
+    PETRI = "Petri Net"
 
 
 def footer():
