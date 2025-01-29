@@ -27,7 +27,7 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
             elif ai_provider == AIProviders.OPENAI.value:
                 api_url = "https://api.openai.com/v1"
             elif ai_provider == AIProviders.DEEPSEEK.value:
-                api_url = "https://api.deepseek.com/v1"
+                api_url = "https://api.deepseek.com/"
             elif ai_provider == AIProviders.MISTRAL_AI.value:
                 api_url = "https://api.mistral.ai/v1/"
             else:
