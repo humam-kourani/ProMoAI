@@ -2,19 +2,6 @@ import pm4py
 from pm4py.objects.powl.obj import Transition, SilentTransition, StrictPartialOrder, OperatorPOWL, Operator, POWL
 
 
-# def check_frequency(model, optional, repeatable):
-#     if repeatable:
-#         if optional:
-#             return OperatorPOWL(Operator.LOOP, [SilentTransition(), model])
-#         else:
-#             return OperatorPOWL(Operator.LOOP, [model, SilentTransition()])
-#     else:
-#         if optional:
-#             return OperatorPOWL(Operator.XOR, [SilentTransition(), model])
-#         else:
-#             return model
-
-
 def get_node_type(node):
     if node.__class__ is pm4py.objects.powl.obj.Transition:
         return f"Activity ({node.label})"
@@ -44,7 +31,7 @@ class ModelGenerator:
     def silent_transition(self):
         return SilentTransition()
 
-    def create_model(self, node: POWL, parent_type):
+    def create_model(self, node: POWL):
         if node is None:
             res = SilentTransition()
         else:
@@ -57,11 +44,6 @@ class ModelGenerator:
                 if self.copy_duplicates:
                     res = node.copy()
                 else:
-                    # raise Exception(f"Ensure that"
-                    #                 f" each submodel is used uniquely!"
-                    #                 f" Within the children of the this {parent_type} construct, you are trying to"
-                    #                 f" reuse submodels that were used as children of other constructs (xor, loop,"
-                    #                 f" or partial_order) before!")
                     node_type = get_node_type(node)
                     raise Exception(f"Ensure that"
                                     f" each submodel is used uniquely! Avoid trying to"
@@ -75,14 +57,14 @@ class ModelGenerator:
     def xor(self, *args):
         if len(args) < 2:
             raise Exception("Cannot create an xor of less than 2 submodels!")
-        children = [self.create_model(child, "'gen.xor'") for child in args]
+        children = [self.create_model(child) for child in args]
         res = OperatorPOWL(Operator.XOR, children)
         return res
 
     def loop(self, do, redo):
         if do is None and redo is None:
             raise Exception("Cannot create an empty loop with both the do and redo parts missing!")
-        children = [self.create_model(do, "'gen.loop'"), self.create_model(redo, "'gen.loop'")]
+        children = [self.create_model(do), self.create_model(redo)]
         res = OperatorPOWL(Operator.LOOP, children)
         return res
 
@@ -105,7 +87,7 @@ class ModelGenerator:
             raise Exception("Cannot create a partial order over 0 submodels!")
         children = dict()
         for child in list_children:
-            new_child = self.create_model(child, "'gen.partial_order'")
+            new_child = self.create_model(child)
             children[child] = new_child
 
         if self.nested_partial_orders:
