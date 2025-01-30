@@ -81,6 +81,5 @@ def translate_powl_to_code(powl_obj):
 
     final_var = process_powl(powl_obj)
     code_lines.append(f"final_model = {final_var}")
-    print("We return: ")
-    print('\n'.join(code_lines))
+
     return '\n'.join(code_lines)
