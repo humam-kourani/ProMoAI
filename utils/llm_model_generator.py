@@ -1,5 +1,6 @@
 from pm4py.objects.powl.obj import POWL
 
+from utils.pn_to_powl.converter_utils.powl_to_code import translate_powl_to_code
 from utils.prompting import create_conversation, update_conversation
 from utils.model_generation.model_generation import generate_model, extract_model_from_response
 from utils.model_generation import code_extraction
@@ -10,7 +11,7 @@ from typing import Optional
 
 class LLMProcessModelGenerator(object):
     def __init__(self, process_description: Optional[str], api_key: str, llm_name: str,
-                 ai_provider: str, powl_model_code: str = None, powl_model: POWL = None):
+                 ai_provider: str, powl_model: POWL = None):
         self.ai_provider = ai_provider
         self.api_key = api_key
         self.llm_name = llm_name
@@ -22,21 +23,22 @@ class LLMProcessModelGenerator(object):
                                                                          ai_provider=self.ai_provider)
         elif powl_model:
             conversation = list(init_conversation)
-            conversation.append({"role": "assistant",
-                                 "content": "We have the following POWL model already created: "
-                                            "on the user's feedback:\n\n" + str(powl_model)})
+            conversation.append({"role": "user",
+                                 "content": "Instead of starting with a process description, I will give the code of"
+                                            " the initial process model:\n\n" + translate_powl_to_code(powl_model)})
             self.process_model = powl_model
             self.conversation = conversation
-        elif powl_model_code:
-            code, process_model = extract_model_from_response(powl_model_code, 0)
-            conversation = list(init_conversation)
-            conversation.append({"role": "assistant",
-                                 "content": "The following code is used to generate the process model:\n\n" + powl_model_code})
-            self.process_model = process_model
-            self.conversation = conversation
+        # elif powl_model_code:
+        #     code, process_model = extract_model_from_response(powl_model_code, 0)
+        #     conversation = list(init_conversation)
+        #     conversation.append({"role": "assistant",
+        #                          "content": "The following code is used to generate the process model:\n\n" + powl_model_code})
+        #     self.process_model = process_model
+        #     self.conversation = conversation
         else:
             raise Exception(
-                "insufficient parameters provided to LLMProcessModelGenerator. at least one between 'process_description' and 'powl_model_code' should be provided.")
+                "insufficient parameters provided to LLMProcessModelGenerator. at least one between"
+                " 'process_description' and 'powl_model' should be provided.")
 
     def __to_petri_net(self):
         from pm4py.objects.conversion.powl.converter import apply as powl_to_pn
@@ -116,14 +118,14 @@ class LLMProcessModelGenerator(object):
 
 
 def initialize(process_description: str | None, api_key: str, llm_name: str, ai_provider: str,
-               powl_model_code: str = None, powl_model: POWL = None, n_candidates: int = 1, debug: bool = False):
+               powl_model: POWL = None, n_candidates: int = 1, debug: bool = False):
     best_cand = None
     exception = ""
     for i in range(n_candidates):
         try:
             cand = LLMProcessModelGenerator(process_description=process_description, api_key=api_key,
                                             llm_name=llm_name, ai_provider=ai_provider,
-                                            powl_model_code=powl_model_code, powl_model=powl_model)
+                                            powl_model=powl_model)
             if n_candidates > 1:
                 raise Exception("Currently, there is no support for multiple candidate generation!")
             else:
