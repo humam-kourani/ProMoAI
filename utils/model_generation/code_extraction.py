@@ -4,7 +4,7 @@ import traceback
 
 def extract_final_python_code(response_text):
     python_code_pattern = r"```python(.*?)```"
-    allowed_import_path = "utils.model_generation"
+    allowed_import_path = "utils.model_generation.generator"
     allowed_import_class = "ModelGenerator"
     any_import_pattern = r"^\s*(from\s+\S+\s+import\s+\S+|import\s+\S+)"
     allowed_import_pattern = r"^\s*(from\s+" + re.escape(allowed_import_path) + r"\s+import\s+" + re.escape(
@@ -33,7 +33,11 @@ def execute_code_and_get_variable(code, variable_name):
     try:
         local_vars = {}
         exec(code, globals(), local_vars)
-        return local_vars.get(variable_name, "Variable not found.")
+        try:
+            value = local_vars[variable_name]
+        except KeyError:
+            raise ValueError(f"Variable '{variable_name}' not found!")
+        return value
     except Exception:
         exc_type, exc_value, exc_traceback = traceback.sys.exc_info()
         error_msg = traceback.format_exception_only(exc_type, exc_value)[-1].strip()
@@ -53,6 +57,7 @@ def execute_code_and_get_variable(code, variable_name):
         if line_number:
             error_details = f"Error occurred at line {line_number}: \"{error_line}\" with message: {error_msg}"
         else:
-            error_details = f"Error occurred with message: {error_msg}"
+            error_details = f"Error occurred with message: {error_msg}. \n The error occurred with trying to execute " \
+                            f"the following extracted code: {code}. "
 
         raise Exception(error_details)

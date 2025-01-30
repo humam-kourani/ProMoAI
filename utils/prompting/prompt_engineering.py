@@ -3,18 +3,31 @@ from typing import List
 
 from utils.prompting.shots import SHOTS
 
-import_statement = 'from utils.model_generation import ModelGenerator'
+import_statement = 'from converter_utils.model_generation import ModelGenerator'
+
+ERROR_MESSAGE_FOR_MODEL_GENERATION = """
+Please update the model to fix the error. Make sure" \
+                          f" to save the updated final model is the variable 'final_model'. """
+
+STRICT_PROMPT = False
 
 
 def add_role():
-    return "Your role: you are an expert in process modeling," \
-           " familiar with common" \
-           " process constructs such as exclusive choice, do-redo loops, and partial orders." \
-           " Your task is to analyze the textual description of a process and transform it into a process model in" \
-           " the POWL language. When generating a model, be as precise" \
-           " as possible and capture all details of the process in the model. Also act as the process owner and use" \
-           " your expertise and familiarity with the" \
-           " process context to fill in any missing knowledge. \n\n"
+    res = "Your role: you are an expert in process modeling," \
+          " familiar with common" \
+          " process constructs such as exclusive choice, do-redo loops, and partial orders." \
+          " Your task is to analyze the textual description of a process and transform it into a process model in" \
+          " the POWL language. When generating a model, be as precise" \
+          " as possible and capture all details of the process in the model. "
+    if STRICT_PROMPT:
+        res = res + "Please create the process model strictly depending on the provided description, without using " \
+                    "any domain knowledge you might have. You are not supposed to correct any information in the " \
+                    "process, rather fully reply on the provided textual description.\n\n"
+    else:
+        res = res + "Also act as the process owner and use" \
+                    " your expertise and familiarity with the" \
+                    " process context to fill in any missing knowledge. \n\n"
+    return res
 
 
 def add_knowledge():
@@ -29,11 +42,8 @@ def add_knowledge():
            " of n >= 2 sub-models. We use the operator loop to model a do-redo loop of 2 POWL models." \
            " The third type of POWL models is defined as a partial" \
            " order over n >= 2 submodels. A partial order is binary relation that is irreflexive, transitive," \
-           " and asymmetry. \n\n"
-
-
-def add_least_to_most():
-    return "Provide the Python code that " \
+           " and asymmetry. " \
+           "Provide the Python code that " \
            "recursively generate a POWL model. Save the final model is the" \
            " variable 'final_model'. Do not try to execute the code, just return it. Assume the class ModelGenerator" \
            " is properly implemented and can be imported using the import statement:" \
@@ -88,7 +98,7 @@ def add_process_description(process_description):
     return "This is the process description: " + process_description
 
 
-def self_evaluation():
+def negative_prompting():
     return "Avoid common mistakes. " \
            "First, ensure that the transitive closure of the generated partial orders" \
            " do not violate irreflexivity. Verify that all optional/skippable and" \
@@ -137,11 +147,12 @@ def add_few_shots():
 def create_model_generation_prompt(process_description: str) -> str:
     prompt = add_role()
     prompt = prompt + add_knowledge()
-    prompt = prompt + add_least_to_most()
-    prompt = prompt + self_evaluation()
+    prompt = prompt + negative_prompting()
     prompt = prompt + add_few_shots()
     prompt = prompt + code_generation()
-    prompt = prompt + add_process_description(process_description)
+
+    if process_description is not None:
+        prompt = prompt + add_process_description(process_description)
 
     return prompt
 
@@ -149,7 +160,6 @@ def create_model_generation_prompt(process_description: str) -> str:
 def create_conversation(process_description: str) -> List[dict[str:str]]:
     prompt = create_model_generation_prompt(process_description)
     conversation = [{"role": "user", "content": f'{prompt}'}]
-    print(prompt)
     return conversation
 
 
@@ -159,5 +169,50 @@ def update_conversation(conversation: List[dict[str:str]], feedback: str) -> Lis
                     "feedback comment as well. Make sure to save the updated final model is the variable" \
                     " 'final_model'. This is the new feedback comment:" + feedback
     conversation.append({"role": "user", "content": f'{update_prompt}'})
-    print(update_prompt)
     return conversation
+
+
+def model_self_improvement_prompt():
+    return (
+        "Thank you! The model was generated successfully! Could you further improve the model? "
+        "Please critically evaluate the process model and improve it accordingly **only where genuinely beneficial**. "
+        "Potential improvement steps might for instance include adding missing activities, managing additional "
+        "exceptions, increasing concurrency in execution, or elevating choices to higher levels. If you find the "
+        "model already optimized or see no significant areas for enhancement, it is "
+        "perfectly acceptable to make minimal adjustments (e.g., relabeling some activities) or to return the "
+        "same model without any changes."
+    )
+
+
+def model_self_improvement_prompt_short():
+    return (
+        "Thank you! The model was generated successfully! Could you further improve the model? "
+        "Please critically evaluate the process model against the initial process description and improve it"
+        " accordingly **only where genuinely beneficial**. If you see no significant areas for enhancement, it is "
+        "perfectly acceptable to return the same model without any changes. Regardless of whether you improve the"
+        " model or not, make sure to include a Python snippet that contains the model in your response."
+    )
+
+
+def description_self_improvement_prompt(descr: str):
+    res = f"""
+    You are provided with a process description. Your task is to optimize this description to make it richer and more
+     detailed, while ensuring that all additions are relevant, accurate, and directly related to the original process.
+     The goal is to make the description more comprehensive and suitable for process modeling purposes. """
+
+    res = res + f"""Possible areas for enhancement include:\n
+    - **Detail Enhancement:** Add specific details that are missing but crucial for understanding the process flow. \n
+    - **Clarity Improvement:** Clarify any ambiguous or vague statements to ensure that the description is clear and understandable.\n
+    - **Explicit Process Constructs:** Rephrase parts of the description to explicitly incorporate constructs. 
+    For example, change 'X happens in most cases' to 'there is an exclusive choice between performing X or
+     skipping it'.\n
+
+    Please answer by only returning the improved process description without any additional text in your response. Do
+     not define concrete activity labels yourself!"\n
+
+    The process description:\n
+
+    {descr}
+    """
+
+    return res
