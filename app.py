@@ -140,7 +140,8 @@ def run_app():
         elif input_type == InputType.DATA.value:
             uploaded_log = st.file_uploader("For **process model discovery**, upload an event log:",
                                             type=["xes", "xes.gz"],
-                                            help="Event log.")
+                                            help="The event log will be used to generate a process model"
+                                                 " using the POWL miner (see https://doi.org/10.1016/j.is.2024.102493).")
             submit_button = st.form_submit_button(label='Run')
             if submit_button:
                 if uploaded_log is None:
@@ -169,8 +170,7 @@ def run_app():
         elif input_type == InputType.MODEL.value:
             uploaded_file = st.file_uploader(
                 "For **process model improvement**, upload a semi-block-structured BPMN or Petri net:",
-                type=["bpmn", "pnml"],
-                help="Block-structured workflow.",
+                type=["bpmn", "pnml"]
             )
             submit_button = st.form_submit_button(label='Upload')
             if submit_button:
@@ -221,7 +221,7 @@ def run_app():
                     except Exception as e:
                         if os.path.exists(temp_dir):
                             shutil.rmtree(temp_dir, ignore_errors=True)
-                        st.error(body="Please upload a block-structured model!", icon="⚠️")
+                        st.error(body="Please upload a semi-block-structured model!", icon="⚠️")
                         return
 
     if 'model_gen' in st.session_state and st.session_state['model_gen']:
