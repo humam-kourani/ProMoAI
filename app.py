@@ -14,10 +14,10 @@ from pm4py.objects.conversion.wf_net.variants.to_bpmn import apply as pn_to_bpmn
 from pm4py.objects.bpmn.layout import layouter
 from pm4py.objects.bpmn.exporter.variants.etree import get_xml_string
 
-from utils import llm_model_generator
-from utils.app_utils import InputType, ViewType, footer
-from utils.general_utils.ai_providers import AIProviders
-from utils.pn_to_powl.converter import convert_workflow_net_to_powl
+from promoai import llm_model_generator
+from promoai.app_utils import InputType, ViewType, footer
+from promoai.general_utils.ai_providers import AIProviders
+from promoai.pn_to_powl.converter import convert_workflow_net_to_powl
 
 
 def run_model_generator_app():

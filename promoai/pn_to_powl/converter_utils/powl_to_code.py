@@ -1,7 +1,7 @@
 from pm4py.objects.powl.obj import StrictPartialOrder, OperatorPOWL, Transition, SilentTransition
 from pm4py.objects.process_tree.obj import Operator
 
-from utils.prompting.prompt_engineering import import_statement
+from promoai.prompting.prompt_engineering import import_statement
 
 
 def translate_powl_to_code(powl_obj):

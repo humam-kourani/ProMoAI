@@ -1,7 +1,7 @@
 import inspect
 from typing import List
 
-from utils.prompting.shots import SHOTS
+from promoai.prompting.shots import SHOTS
 
 import_statement = 'from converter_utils.model_generation import ModelGenerator'
 
