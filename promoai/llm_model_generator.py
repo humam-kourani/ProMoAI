@@ -1,9 +1,9 @@
 from pm4py.objects.powl.obj import POWL
 
-from utils.pn_to_powl.converter_utils.powl_to_code import translate_powl_to_code
-from utils.prompting import create_conversation, update_conversation
-from utils.model_generation.model_generation import generate_model, extract_model_from_response
-from utils.model_generation import code_extraction
+from promoai.pn_to_powl.converter_utils.powl_to_code import translate_powl_to_code
+from promoai.prompting import create_conversation, update_conversation
+from promoai.model_generation.model_generation import generate_model, extract_model_from_response
+from promoai.model_generation import code_extraction
 from pm4py.util import constants
 from copy import deepcopy
 from typing import Optional

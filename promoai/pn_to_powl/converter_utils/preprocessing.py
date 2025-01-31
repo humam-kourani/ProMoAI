@@ -4,7 +4,7 @@ from pm4py import PetriNet
 from pm4py.objects.petri_net.utils import petri_utils as pn_util
 from pm4py.algo.analysis.workflow_net import algorithm as wf_eval
 
-from utils.pn_to_powl.converter_utils.subnet_creation import add_arc_from_to, id_generator
+from promoai.pn_to_powl.converter_utils.subnet_creation import add_arc_from_to, id_generator
 
 
 def validate_workflow_net(net: PetriNet):

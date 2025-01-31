@@ -9,7 +9,7 @@
 
 import pm4py
 from pm4py.objects.conversion.powl.variants.to_petri_net import apply as to_pn
-from utils.model_generation import ModelGenerator
+from promoai.model_generation import ModelGenerator
 
 d1 = "in this process, you can either do 'a' or 'b'. If 'a' is selected," \
      " then it can be repeated. After completing 'a' or 'b', 'c' may be executed. c is always followed by 'd'." \

@@ -1,8 +1,8 @@
 from typing import List, Any
 
-from utils.general_utils.llm_connection import generate_result_with_error_handling
-from utils.model_generation.code_extraction import extract_final_python_code, execute_code_and_get_variable
-from utils.model_generation.validation import validate_partial_orders_with_missing_transitive_edges
+from promoai.general_utils.llm_connection import generate_result_with_error_handling
+from promoai.model_generation.code_extraction import extract_final_python_code, execute_code_and_get_variable
+from promoai.model_generation.validation import validate_partial_orders_with_missing_transitive_edges
 from pm4py.objects.powl.obj import POWL
 
 

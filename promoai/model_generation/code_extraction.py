@@ -4,7 +4,7 @@ import traceback
 
 def extract_final_python_code(response_text):
     python_code_pattern = r"```python(.*?)```"
-    allowed_import_path = "utils.model_generation.generator"
+    allowed_import_path = "promoai.model_generation.generator"
     allowed_import_class = "ModelGenerator"
     any_import_pattern = r"^\s*(from\s+\S+\s+import\s+\S+|import\s+\S+)"
     allowed_import_pattern = r"^\s*(from\s+" + re.escape(allowed_import_path) + r"\s+import\s+" + re.escape(

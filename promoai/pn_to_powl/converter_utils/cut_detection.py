@@ -3,8 +3,8 @@ from itertools import combinations
 
 from pm4py.objects.petri_net.obj import PetriNet
 from pm4py.objects.petri_net.utils import petri_utils as pn_util
-from utils.pn_to_powl.converter_utils.weak_reachability import get_reachable_transitions_from_place_to_another
-from utils.pn_to_powl.converter_utils.subnet_creation import pn_transition_to_powl, clone_place, add_arc_from_to
+from promoai.pn_to_powl.converter_utils.weak_reachability import get_reachable_transitions_from_place_to_another
+from promoai.pn_to_powl.converter_utils.subnet_creation import pn_transition_to_powl, clone_place, add_arc_from_to
 
 
 def mine_base_case(net: PetriNet):

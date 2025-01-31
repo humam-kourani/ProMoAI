@@ -2,12 +2,12 @@ from pm4py import PetriNet
 from pm4py.objects.powl.BinaryRelation import BinaryRelation
 from pm4py.objects.powl.obj import OperatorPOWL, POWL, Operator, StrictPartialOrder
 
-from utils.pn_to_powl.converter_utils.cut_detection import mine_base_case, mine_xor, mine_loop, mine_partial_order, \
+from promoai.pn_to_powl.converter_utils.cut_detection import mine_base_case, mine_xor, mine_loop, mine_partial_order, \
     mine_self_loop
-from utils.pn_to_powl.converter_utils.weak_reachability import get_simplified_reachability_graph
+from promoai.pn_to_powl.converter_utils.weak_reachability import get_simplified_reachability_graph
 
-from utils.pn_to_powl.converter_utils.preprocessing import validate_workflow_net, preprocess
-from utils.pn_to_powl.converter_utils.subnet_creation import clone_subnet, apply_partial_order_projection
+from promoai.pn_to_powl.converter_utils.preprocessing import validate_workflow_net, preprocess
+from promoai.pn_to_powl.converter_utils.subnet_creation import clone_subnet, apply_partial_order_projection
 
 
 def convert_workflow_net_to_powl(net: PetriNet) -> POWL:
