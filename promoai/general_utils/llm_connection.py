@@ -33,7 +33,7 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
             else:
                 raise Exception(f"AI provider {ai_provider} is not supported!")
             response = generate_response_with_history(conversation, api_key, llm_name, api_url)
-
+        print_conversation(conversation)
         try:
             conversation.append({"role": "assistant", "content": response})
             auto_duplicate = iteration >= max_iterations
@@ -48,7 +48,6 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
                                                                                               f" message: {error_description}"
             conversation.append({"role": "user", "content": new_message})
 
-    print_conversation(conversation)
     raise Exception(llm_name + " failed to fix the errors after " + str(max_iterations + 5) +
                     " iterations! This is the error history: " + str(error_history))
 
