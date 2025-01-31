@@ -1,4 +1,4 @@
-pm4py==2.7.11.11
+pm4py==2.7.13.1
 streamlit
 requests
 google-generativeai
