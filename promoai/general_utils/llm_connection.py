@@ -113,6 +113,9 @@ def generate_response_with_history(conversation_history, api_key, llm_name, api_
             chunk_count = 0
             # We add stream=True to requests so we can iterate over chunks
             with requests.post(complete_url, headers=headers, json=payload, stream=True) as resp:
+                if resp.status_code != 200:
+                    raise Exception(resp.text)
+
                 for line in resp.iter_lines():
                     if not line:
                         continue
@@ -133,18 +136,21 @@ def generate_response_with_history(conversation_history, api_key, llm_name, api_
                                 chunk_count += 1
                                 # print(chunk_count)
                                 if chunk_count % 10 == 0:
-                                    #print(chunk_count, len(response_message), response_message.replace("\n", " ").replace("\r", "").strip())
+                                    # print(chunk_count, len(response_message), response_message.replace("\n", " ").replace("\r", "").strip())
                                     pass
                         except json.JSONDecodeError:
                             # Possibly a keep-alive or incomplete chunk
                             traceback.print_exc()
         else:
-            response = requests.post(api_url + "/chat/completions", headers=headers, json=payload).json()
+            response = requests.post(api_url + "/chat/completions", headers=headers, json=payload)
+            if response.status_code != 200:
+                raise Exception(response.text)
+            response = response.json()
             response_message = response["choices"][0]["message"]["content"]
-    except:
-        traceback.print_exc()
-
-    return response_message
+    except Exception as e:
+        raise e
+    else:
+        return response_message
 
 
 def generate_response_with_history_google(conversation_history, api_key, google_model) -> str:
