@@ -1,3 +1,5 @@
+import json
+import traceback
 from typing import Callable, List, TypeVar, Any
 from promoai.general_utils.ai_providers import AIProviders
 from promoai.prompting.prompt_engineering import ERROR_MESSAGE_FOR_MODEL_GENERATION
@@ -92,15 +94,57 @@ def generate_response_with_history(conversation_history, api_key, llm_name, api_
     if api_url.endswith("/"):
         api_url = api_url[:-1]
 
-    try:
-        response = requests.post(api_url + "/chat/completions", headers=headers, json=payload).json()
-    except Exception as e:
-        raise Exception("Connection failed! This is the error: " + str(e))
+    complete_url = api_url + "/chat/completions"
+
+    response_message = ""
+    streaming_enabled = True
+
+    for m_not_supporting_streaming in ["o1-", "o3-"]:
+        if llm_name.lower().startswith(m_not_supporting_streaming):
+            streaming_enabled = False
 
     try:
-        return response["choices"][0]["message"]["content"]
-    except Exception as e:
-        raise Exception("Connection failed! This is the response: " + str(response))
+        if streaming_enabled:
+            # some providers for DeepSeek-R1 and distillations might be *very* slow and causing timeout error.
+            # this may also happen with other big models (Llama3.1-405B, DeepSeek-V3, ...)
+            # streaming solves that :)
+
+            payload["stream"] = True
+            chunk_count = 0
+            # We add stream=True to requests so we can iterate over chunks
+            with requests.post(complete_url, headers=headers, json=payload, stream=True) as resp:
+                for line in resp.iter_lines():
+                    if not line:
+                        continue
+                    decoded_line = line.decode("utf-8")
+
+                    # OpenAI-style streaming lines begin with "data: "
+                    if decoded_line.startswith("data: "):
+                        data_str = decoded_line[len("data: "):].strip()
+                        if data_str == "[DONE]":
+                            # End of stream
+                            break
+                        try:
+                            data_json = json.loads(data_str)
+                            if "choices" in data_json:
+                                # Each chunk has a delta with partial content
+                                chunk_content = data_json["choices"][0]["delta"].get("content", "")
+                                response_message += chunk_content
+                                chunk_count += 1
+                                # print(chunk_count)
+                                if chunk_count % 10 == 0:
+                                    #print(chunk_count, len(response_message), response_message.replace("\n", " ").replace("\r", "").strip())
+                                    pass
+                        except json.JSONDecodeError:
+                            # Possibly a keep-alive or incomplete chunk
+                            traceback.print_exc()
+        else:
+            response = requests.post(api_url + "/chat/completions", headers=headers, json=payload).json()
+            response_message = response["choices"][0]["message"]["content"]
+    except:
+        traceback.print_exc()
+
+    return response_message
 
 
 def generate_response_with_history_google(conversation_history, api_key, google_model) -> str:
