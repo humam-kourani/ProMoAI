@@ -1,4 +1,5 @@
 pm4py==2.7.13.1
+setuptools
 streamlit
 requests
 google-generativeai
