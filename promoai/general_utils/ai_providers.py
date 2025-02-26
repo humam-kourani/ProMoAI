@@ -8,3 +8,4 @@ class AIProviders(Enum):
     ANTHROPIC = "Anthropic"
     DEEPINFRA = "Deepinfra"
     MISTRAL_AI = "Mistral AI"
+    PERPLEXITY = "Perplexity"

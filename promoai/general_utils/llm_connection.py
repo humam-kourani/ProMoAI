@@ -138,3 +138,33 @@ def generate_response_with_history_anthropic(conversation, api_key, llm_name):
         return message.content[0].text
     except Exception:
         raise Exception("Connection failed! This is the response: " + str(message))
+
+
+def perplexity_deep_research(api_key, question):
+    import requests
+    
+    # Define the API endpoint
+    url = "https://api.perplexity.ai/chat/completions"  # Update this URL based on the actual endpoint
+
+    # Set up headers including the API key if required
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + api_key
+    }
+
+    # Define the payload with your query and desired model
+    payload = {
+        "messages": [{"role": "user", "content": question}],
+        "model": "sonar-deep-research"
+    }
+
+    # Make the POST request to the Perplexity API
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code == 200:
+        response = response.json()
+        response = response["choices"][0]["message"]["content"]
+
+        return response.split("</think>")[-1].strip()
+
+    raise Exception("deep research failed")
