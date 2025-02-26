@@ -30,6 +30,8 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
                 api_url = "https://api.deepseek.com/"
             elif ai_provider == AIProviders.MISTRAL_AI.value:
                 api_url = "https://api.mistral.ai/v1/"
+            elif ai_provider == AIProviders.PERPLEXITY.value:
+                api_url = "https://api.perplexity.com/"
             else:
                 raise Exception(f"AI provider {ai_provider} is not supported!")
             response = generate_response_with_history(conversation, api_key, llm_name, api_url)
@@ -142,7 +144,7 @@ def generate_response_with_history_anthropic(conversation, api_key, llm_name):
 
 def perplexity_deep_research(api_key, question):
     import requests
-    
+
     # Define the API endpoint
     url = "https://api.perplexity.ai/chat/completions"  # Update this URL based on the actual endpoint
 
