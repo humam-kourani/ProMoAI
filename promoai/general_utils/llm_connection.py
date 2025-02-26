@@ -31,7 +31,7 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
             elif ai_provider == AIProviders.MISTRAL_AI.value:
                 api_url = "https://api.mistral.ai/v1/"
             elif ai_provider == AIProviders.PERPLEXITY.value:
-                api_url = "https://api.perplexity.com/"
+                api_url = "https://api.perplexity.ai/"
             else:
                 raise Exception(f"AI provider {ai_provider} is not supported!")
             response = generate_response_with_history(conversation, api_key, llm_name, api_url)
