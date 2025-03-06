@@ -196,10 +196,10 @@ def run_app():
                             contents = uploaded_file.read()
 
                             os.makedirs(temp_dir, exist_ok=True)
-                            with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".bpmn",
+                            with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".pnml",
                                                              dir=temp_dir) as temp_file:
                                 temp_file.write(contents)
-                                pn, im, fm = pm4py.read_pnml("temp.pnml")
+                                pn, im, fm = pm4py.read_pnml(temp_file.name)
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
                         else:
