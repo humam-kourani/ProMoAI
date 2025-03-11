@@ -32,7 +32,7 @@ def run_app():
     )
 
     model_defaults = {
-        AIProviders.GOOGLE.value: 'gemini-2.0-pro',
+        AIProviders.GOOGLE.value: 'gemini-1.5-pro',
         AIProviders.OPENAI.value: 'gpt-4',
         AIProviders.DEEPSEEK.value: 'deepseek-reasoner',
         AIProviders.ANTHROPIC.value: 'claude-3-5-sonnet-latest',
