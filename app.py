@@ -4,20 +4,18 @@ import subprocess
 import streamlit as st
 import tempfile
 
-import pm4py
-from pm4py.algo.discovery.powl.inductive.variants.powl_discovery_varaints import POWLDiscoveryVariant
+import promoai
+from promoai.general_utils.app_utils import InputType, ViewType, DISCOVERY_HELP
+from promoai.general_utils.ai_providers import AI_MODEL_DEFAULTS, AI_HELP_DEFAULTS, MAIN_HELP, \
+    DEFAULT_AI_PROVIDER
+from pm4py import read_xes, read_pnml, read_bpmn, convert_to_petri_net, convert_to_bpmn
 from pm4py.util import constants
 from pm4py.objects.petri_net.exporter.variants.pnml import export_petri_as_string
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
 from pm4py.visualization.bpmn import visualizer as bpmn_visualizer
-from pm4py.objects.conversion.wf_net.variants.to_bpmn import apply as pn_to_bpmn
-from pm4py.objects.bpmn.layout import layouter
+from pm4py.objects.bpmn.layout import layouter as bpmn_layouter
 from pm4py.objects.bpmn.exporter.variants.etree import get_xml_string
 
-from promoai import llm_model_generator
-from promoai.app_utils import InputType, ViewType, footer
-from promoai.general_utils.ai_providers import AIProviders
-from promoai.pn_to_powl.converter import convert_workflow_net_to_powl
 
 
 def run_model_generator_app():
@@ -31,60 +29,36 @@ def run_app():
         "Process Modeling with Generative AI"
     )
 
-    model_defaults = {
-        AIProviders.GOOGLE.value: 'gemini-1.5-pro',
-        AIProviders.OPENAI.value: 'gpt-4',
-        AIProviders.DEEPSEEK.value: 'deepseek-reasoner',
-        AIProviders.ANTHROPIC.value: 'claude-3-5-sonnet-latest',
-        AIProviders.DEEPINFRA.value: 'meta-llama/Llama-3.2-90B-Vision-Instruct',
-        AIProviders.MISTRAL_AI.value: 'mistral-large-latest'
-    }
-
-    model_help = {
-        AIProviders.GOOGLE.value: "Enter a Google model name. You can get a **free Google API key** and check the latest models under: https://ai.google.dev/.",
-        AIProviders.OPENAI.value: "Enter an OpenAI model name. You can get an OpenAI API key and check the latest models under: https://openai.com/pricing.",
-        AIProviders.DEEPSEEK.value: "Enter a DeepSeek model name. You can get a DeepSeek API key and check the latest models under: https://api-docs.deepseek.com/.",
-        AIProviders.ANTHROPIC.value: "Enter an Anthropic model name. You can get an Anthropic API key and check the latest models under: https://www.anthropic.com/api.",
-        AIProviders.DEEPINFRA.value: "Enter a model name available through Deepinfra. DeepInfra supports popular open-source large language models like Meta's LLaMa and Mistral, and it also enables custom model deployment. You can get a Deepinfra API key and check the latest models under: https://deepinfra.com/models.",
-        AIProviders.MISTRAL_AI.value: "Enter a Mistral AI model name. You can get a Mistral AI API key and check the latest models under: https://mistral.ai/."
-    }
-
     temp_dir = "temp"
 
     if 'provider' not in st.session_state:
-        st.session_state['provider'] = AIProviders.GOOGLE.value
+        st.session_state['provider'] = DEFAULT_AI_PROVIDER
 
     if 'model_name' not in st.session_state:
-        st.session_state['model_name'] = model_defaults[st.session_state['provider']]
+        st.session_state['model_name'] = AI_MODEL_DEFAULTS[st.session_state['provider']]
 
     def update_model_name():
-        # if 'model_gen' in st.session_state:
-        #     st.session_state.pop('model_gen')
-        st.session_state['model_name'] = model_defaults[st.session_state['provider']]
+        st.session_state['model_name'] = AI_MODEL_DEFAULTS[st.session_state['provider']]
 
     with st.expander("🔧 Configuration", expanded=True):
         provider = st.radio(
             "Choose AI Provider:",
-            options=model_defaults.keys(),
+            options=AI_MODEL_DEFAULTS.keys(),
             index=0,
             horizontal=True,
-            help="Select the AI provider you'd like to use. Google offers the Gemini models,"
-                 " which you can **try for free**,"
-                 " while OpenAI provides GPT models. DeepInfra supports popular open-source large language models like"
-                 " Meta's LLaMa and also enables custom model deployment. You can also try the models provided by"
-                 " DeepSeek, Anthropic, and Mistral AI.",
+            help=MAIN_HELP,
             on_change=update_model_name,
             key='provider',
         )
 
         if 'model_name' not in st.session_state or st.session_state['provider'] != provider:
-            st.session_state['model_name'] = model_defaults[provider]
+            st.session_state['model_name'] = AI_MODEL_DEFAULTS[provider]
 
         col1, col2 = st.columns(2)
         with col1:
             ai_model_name = st.text_input("Enter the AI model name:",
                                           key='model_name',
-                                          help=model_help[st.session_state['provider']])
+                                          help=AI_HELP_DEFAULTS[st.session_state['provider']])
         with col2:
             api_key = st.text_input("API key:", type="password")
 
@@ -103,35 +77,15 @@ def run_app():
     with st.form(key='model_gen_form'):
         if input_type == InputType.TEXT.value:
             description = st.text_area("For **process modeling**, enter the process description:")
-            # with st.expander("Show Optional Settings"):
-            #     prompt_improvement = st.checkbox(
-            #         label="Self-improve the process description",
-            #         value=False,
-            #         help="If enabled, the language model will self-improve the provided process description to make "
-            #              "it richer and more detailed."
-            #     )
-            #     model_improvement = st.checkbox(
-            #         "Self-improve the generated model",
-            #         value=False,
-            #         help="If enabled, the language model will self-evaluate the generated process model and"
-            #              " potentially improve it accordingly."
-            #     )
             submit_button = st.form_submit_button(label='Run')
             if submit_button:
                 try:
-                    # if prompt_improvement:
-                    #     description = connection_utils.improve_process_description(description, api_key=api_key,
-                    #                                                                openai_model=open_ai_model,
-                    #                                                                api_url=api_url)
+                    process_model = promoai.generate_model_from_text(description,
+                                                                     api_key=api_key,
+                                                                     ai_model=ai_model_name,
+                                                                     ai_provider=provider)
 
-                    obj = llm_model_generator.initialize(description, api_key, ai_model_name, ai_provider=provider)
-
-                    # if model_improvement:
-                    #     feedback = model_self_improvement_prompt()
-                    #     obj = llm_model_generator.update(obj, feedback, n_candidates=num_candidates,
-                    #                                      api_key=api_key, openai_model=open_ai_model, api_url=api_url)
-
-                    st.session_state['model_gen'] = obj
+                    st.session_state['model_gen'] = process_model
                     st.session_state['feedback'] = []
                 except Exception as e:
                     st.error(body=str(e), icon="⚠️")
@@ -140,8 +94,7 @@ def run_app():
         elif input_type == InputType.DATA.value:
             uploaded_log = st.file_uploader("For **process model discovery**, upload an event log:",
                                             type=["xes", "xes.gz"],
-                                            help="The event log will be used to generate a process model"
-                                                 " using the POWL miner (see https://doi.org/10.1016/j.is.2024.102493).")
+                                            help=DISCOVERY_HELP)
             submit_button = st.form_submit_button(label='Run')
             if submit_button:
                 if uploaded_log is None:
@@ -153,15 +106,12 @@ def run_app():
                     with tempfile.NamedTemporaryFile(mode="wb", delete=False,
                                                      dir=temp_dir, suffix=uploaded_log.name) as temp_file:
                         temp_file.write(contents)
-                        log = pm4py.read_xes(temp_file.name)
+                        log = read_xes(temp_file.name, variant="rustxes")
                     shutil.rmtree(temp_dir, ignore_errors=True)
 
-                    powl = pm4py.discover_powl(log, variant=POWLDiscoveryVariant.MAXIMAL)
-                    obj = llm_model_generator.initialize(None, api_key=api_key,
-                                                         powl_model=powl, llm_name=ai_model_name,
-                                                         ai_provider=provider,
-                                                         debug=False)
-                    st.session_state['model_gen'] = obj
+                    process_model = promoai.generate_model_from_event_log(log)
+
+                    st.session_state['model_gen'] = process_model
                     st.session_state['feedback'] = []
                 except Exception as e:
                     shutil.rmtree(temp_dir, ignore_errors=True)
@@ -188,8 +138,9 @@ def run_app():
                             with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".bpmn",
                                                              dir=temp_dir) as temp_file:
                                 temp_file.write(contents)
-                                bpmn_graph = pm4py.read_bpmn(temp_file.name)
-                                pn, im, fm = pm4py.convert_to_petri_net(bpmn_graph)
+
+                                bpmn_graph = read_bpmn(temp_file.name)
+                                process_model = promoai.generate_model_from_bpmn(bpmn_graph)
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
                         elif file_extension == "pnml":
@@ -199,24 +150,16 @@ def run_app():
                             with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".pnml",
                                                              dir=temp_dir) as temp_file:
                                 temp_file.write(contents)
-                                pn, im, fm = pm4py.read_pnml(temp_file.name)
+                                pn, im, fm = read_pnml(temp_file.name)
+                                process_model = promoai.generate_model_from_petri_net(pn)
+
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
                         else:
                             st.error(body=f"Unsupported file format {file_extension}!", icon="⚠️")
                             return
 
-                        # powl_code = pt_to_powl_code.recursively_transform_process_tree(process_tree)
-                        # obj = llm_model_generator.initialize(None, api_key=api_key,
-                        #                                      powl_model_code=powl_code, llm_name=ai_model_name,
-                        #                                      ai_provider=provider,
-                        #                                      debug=False)
-                        powl = convert_workflow_net_to_powl(pn)
-                        obj = llm_model_generator.initialize(None, api_key=api_key,
-                                                             powl_model=powl, llm_name=ai_model_name,
-                                                             ai_provider=provider,
-                                                             debug=False)
-                        st.session_state['model_gen'] = obj
+                        st.session_state['model_gen'] = process_model
                         st.session_state['feedback'] = []
                     except Exception as e:
                         if os.path.exists(temp_dir):
@@ -236,11 +179,10 @@ def run_app():
                     feedback = st.text_area("Feedback:", value="")
                     if st.form_submit_button(label='Update Model'):
                         try:
-                            st.session_state['model_gen'] = llm_model_generator.update(st.session_state['model_gen'],
-                                                                                       feedback,
-                                                                                       api_key=api_key,
-                                                                                       llm_name=ai_model_name,
-                                                                                       ai_provider=provider)
+                            process_model = st.session_state['model_gen']
+                            process_model.update(feedback, api_key=api_key, ai_model=ai_model_name,
+                                                 ai_provider=provider)
+                            st.session_state['model_gen'] = process_model
                         except Exception as e:
                             raise Exception("Update failed! " + str(e))
                         st.session_state['feedback'].append(feedback)
@@ -254,10 +196,11 @@ def run_app():
 
             with col2:
                 st.write("Export Model")
-                powl = st.session_state['model_gen'].get_powl()
-                pn, im, fm = pm4py.convert_to_petri_net(powl)
-                bpmn = pn_to_bpmn(pn, im, fm)
-                bpmn = layouter.apply(bpmn)
+                process_model_obj = st.session_state['model_gen']
+                powl = process_model_obj.get_powl()
+                pn, im, fm = convert_to_petri_net(powl)
+                bpmn = convert_to_bpmn(pn, im, fm)
+                bpmn = bpmn_layouter.apply(bpmn)
 
                 download_1, download_2 = st.columns(2)
                 with download_1:
@@ -284,7 +227,6 @@ def run_app():
             image_format = str("svg").lower()
             if view_option == ViewType.POWL.value:
                 from pm4py.visualization.powl import visualizer
-                powl = powl.simplify()
                 vis_str = visualizer.apply(powl,
                                            parameters={'format': image_format})
 
@@ -293,7 +235,9 @@ def run_app():
                                                     parameters={'format': image_format})
                 vis_str = visualization.pipe(format='svg').decode('utf-8')
             else:  # BPMN
-                visualization = bpmn_visualizer.apply(bpmn,
+                from pm4py.objects.bpmn.layout import layouter
+                layouted_bpmn = layouter.apply(bpmn)
+                visualization = bpmn_visualizer.apply(layouted_bpmn,
                                                       parameters={'format': image_format})
                 vis_str = visualization.pipe(format='svg').decode('utf-8')
 
@@ -302,6 +246,65 @@ def run_app():
 
         except Exception as e:
             st.error(icon='⚠️', body=str(e))
+
+
+def footer():
+    style = """
+        <style>
+          .footer-container { 
+              position: fixed;
+              left: 0;
+              bottom: 0;
+              width: 100%;
+              text-align: center;
+              padding: 15px 0;
+              background-color: white;
+              border-top: 2px solid lightgrey;
+              z-index: 100;
+          }
+
+          .footer-text, .header-text {
+              margin: 0;
+              padding: 0;
+          }
+          .footer-links {
+              margin: 0;
+              padding: 0;
+          }
+          .footer-links a {
+              margin: 0 10px;
+              text-decoration: none;
+              color: blue;
+          }
+          .footer-links img {
+              vertical-align: middle;
+          }
+        </style>
+        """
+
+    foot = f"""
+        <div class='footer-container'>
+            <div class='footer-text'>
+                Developed by 
+                <a href="https://www.linkedin.com/in/humam-kourani-98b342232/" target="_blank" style="text-decoration:none;">Humam Kourani</a>
+                and 
+                <a href="https://www.linkedin.com/in/alessandro-berti-2a483766/" target="_blank" style="text-decoration:none;">Alessandro Berti</a>
+                at the
+                <a href="https://www.fit.fraunhofer.de/" target="_blank" style="text-decoration:none;">Fraunhofer Institute for Applied Information Technology FIT</a>.
+            </div>
+            <div class='footer-links'>
+                <a href="https://doi.org/10.24963/ijcai.2024/1014" target="_blank">
+                    <img src="https://img.shields.io/badge/ProMoAI:%20Process%20Modeling%20with%20Generative%20AI-gray?logo=googledocs&logoColor=white&labelColor=red" alt="ProMoAI Paper">
+                </a>
+                <a href="mailto:humam.kourani@fit.fraunhofer.de?cc=a.berti@pads.rwth-aachen.de;" target="_blank">
+                    <img src="https://img.shields.io/badge/Email-gray?logo=minutemailer&logoColor=white&labelColor=green" alt="Email Humam Kourani">
+                </a>
+            </div>
+        </div>
+        """
+
+    st.markdown(style, unsafe_allow_html=True)
+    st.markdown(foot, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from typing import Callable, List, TypeVar, Any
 from promoai.general_utils.ai_providers import AIProviders
 from promoai.prompting.prompt_engineering import ERROR_MESSAGE_FOR_MODEL_GENERATION
-from promoai import constants
+from promoai.general_utils import constants
 
 T = TypeVar('T')
 

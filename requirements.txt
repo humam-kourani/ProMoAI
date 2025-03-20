@@ -1,6 +1,7 @@
-pm4py==2.7.13.1
+pm4py==2.7.14.2
 setuptools
 streamlit
 requests
 google-generativeai
 anthropic
+rustxes

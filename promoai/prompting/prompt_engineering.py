@@ -1,5 +1,5 @@
 import inspect
-from typing import List
+from typing import List, Optional
 
 from promoai.prompting.shots import SHOTS
 
@@ -157,7 +157,7 @@ def create_model_generation_prompt(process_description: str) -> str:
     return prompt
 
 
-def create_conversation(process_description: str) -> List[dict[str:str]]:
+def create_conversation(process_description: Optional[str]) -> List[dict[str:str]]:
     prompt = create_model_generation_prompt(process_description)
     conversation = [{"role": "user", "content": f'{prompt}'}]
     return conversation
