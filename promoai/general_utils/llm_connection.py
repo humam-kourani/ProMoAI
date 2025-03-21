@@ -22,18 +22,21 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
         elif ai_provider == AIProviders.ANTHROPIC.value:
             response = generate_response_with_history_anthropic(conversation, api_key, llm_name)
         else:
+            use_responses_api = False
             if ai_provider == AIProviders.DEEPINFRA.value:
                 api_url = "https://api.deepinfra.com/v1/openai"
             elif ai_provider == AIProviders.OPENAI.value:
                 api_url = "https://api.openai.com/v1"
+                use_responses_api = True
             elif ai_provider == AIProviders.DEEPSEEK.value:
                 api_url = "https://api.deepseek.com/"
             elif ai_provider == AIProviders.MISTRAL_AI.value:
                 api_url = "https://api.mistral.ai/v1/"
             else:
                 raise Exception(f"AI provider {ai_provider} is not supported!")
-            response = generate_response_with_history(conversation, api_key, llm_name, api_url)
-        print_conversation(conversation)
+            response = generate_response_with_history(conversation, api_key, llm_name, api_url,
+                                                      use_responses_api=use_responses_api)
+        # print_conversation(conversation)
         try:
             conversation.append({"role": "assistant", "content": response})
             auto_duplicate = iteration >= max_iterations
@@ -60,7 +63,7 @@ def print_conversation(conversation):
         print("\n\n")
 
 
-def generate_response_with_history(conversation_history, api_key, llm_name, api_url) -> str:
+def generate_response_with_history(conversation_history, api_key, llm_name, api_url, use_responses_api=False) -> str:
     """
     Generates a response from the LLM using the conversation history.
 
@@ -68,6 +71,7 @@ def generate_response_with_history(conversation_history, api_key, llm_name, api_
     :param api_key: API key
     :param llm_name: model to be used
     :param api_url: API URL to be used
+    :param use_responses_api: set True for OpenAI models only
     :return: The content of the LLM response
     """
     import requests
@@ -79,26 +83,49 @@ def generate_response_with_history(conversation_history, api_key, llm_name, api_
 
     messages_payload = []
     for message in conversation_history:
-        messages_payload.append({
-            "role": message["role"],
-            "content": message["content"]
-        })
+        role = message["role"]
+        text = message["content"]
+        if use_responses_api:
+              processed_message = {
+                "role": role,
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": text
+                    }
+                ]
+            }
+        else:
+            processed_message = {
+                "role": role,
+                "content": text
+            }
 
-    payload = {
-        "model": llm_name,
-        "messages": messages_payload
-    }
+        messages_payload.append(processed_message)
+
+    payload = {"model": llm_name}
+    if use_responses_api:
+        payload["input"] = messages_payload
+    else:
+        payload["messages"] = messages_payload
 
     if api_url.endswith("/"):
         api_url = api_url[:-1]
 
-    try:
+
+    if use_responses_api:
+        response = requests.post(api_url + "/responses", headers=headers, json=payload).json()
+    else:
         response = requests.post(api_url + "/chat/completions", headers=headers, json=payload).json()
-    except Exception as e:
-        raise Exception("Connection failed! This is the error: " + str(e))
+
+    if "error" in response and response["error"]:
+        raise Exception("Connection failed! This is the error message: " + response["error"]["message"])
 
     try:
-        return response["choices"][0]["message"]["content"]
+        if use_responses_api:
+            return response["output"][-1]["content"][0]["text"]
+        else:
+            return response["choices"][0]["message"]["content"]
     except Exception as e:
         raise Exception("Connection failed! This is the response: " + str(response))
 
