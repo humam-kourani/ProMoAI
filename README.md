@@ -1,5 +1,5 @@
 # ProMoAI
-ProMoAI leverages Large Language Models (currently OpenAI's models) for the automatic generation of process models. ProMoAI transforms textual descriptions of processes into process models that can be exported in the BPMN and PNML formats. It also supports user interaction by providing feedback on the generated model to refine it.
+ProMoAI leverages Large Language Models for the automatic generation of process models. ProMoAI transforms textual descriptions of processes into process models that can be exported in the BPMN and PNML formats. It also supports user interaction by providing feedback on the generated model to refine it.
 
 ## Launching as a Streamlit App
 You have two options for running ProMoAI.
