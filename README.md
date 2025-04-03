@@ -1,11 +1,16 @@
 # ProMoAI
-ProMoAI is a Streamlit app that leverages Large Language Models (currently OpenAI's models) for the automatic generation of process models. ProMoAI transforms textual descriptions of processes into process models that can be exported in the BPMN and PNML formats. It also supports user interaction by providing feedback on the generated model to refine it.
+ProMoAI leverages Large Language Models for the automatic generation of process models. ProMoAI transforms textual descriptions of processes into process models that can be exported in the BPMN and PNML formats. It also supports user interaction by providing feedback on the generated model to refine it. ProMoAI supports three input types:
+* *Text:* Provide the initial process description in natural language.
+* *Process Model:* Start with an already existing semi-block-structured BPMN or Petri net and use ProMoAI to refine it.
+* *Event Log:* Start with an event log in the XES format and the initial process model will be derived using process discovery.
 
-## Launching the App
+## Launching as a Streamlit App
 You have two options for running ProMoAI.
 * *On the cloud:* under https://promoai.streamlit.app/.
 * *Locally:* by cloning this repository, installing the required environment and packages, and then running 'streamlit run app.py'.
 
+## Installing as a Python Library
+Run pip install promoai.
 
 ## Requirements
 
