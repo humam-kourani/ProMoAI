@@ -3,8 +3,15 @@ from itertools import combinations
 
 from pm4py.objects.petri_net.obj import PetriNet
 from pm4py.objects.petri_net.utils import petri_utils as pn_util
-from promoai.pn_to_powl.converter_utils.weak_reachability import get_reachable_transitions_from_place_to_another
-from promoai.pn_to_powl.converter_utils.subnet_creation import pn_transition_to_powl, clone_place, add_arc_from_to
+
+from promoai.pn_to_powl.converter_utils.subnet_creation import (
+    add_arc_from_to,
+    clone_place,
+    pn_transition_to_powl,
+)
+from promoai.pn_to_powl.converter_utils.weak_reachability import (
+    get_reachable_transitions_from_place_to_another,
+)
 
 
 def mine_base_case(net: PetriNet):
@@ -15,7 +22,9 @@ def mine_base_case(net: PetriNet):
     return None
 
 
-def mine_self_loop(net: PetriNet, start_place: PetriNet.Place, end_place: PetriNet.Place):
+def mine_self_loop(
+    net: PetriNet, start_place: PetriNet.Place, end_place: PetriNet.Place
+):
     if start_place == end_place:
         place = start_place
         place_copy = clone_place(net, place, {})
@@ -37,12 +46,16 @@ def mine_self_loop(net: PetriNet, start_place: PetriNet.Place, end_place: PetriN
 
 
 def mine_loop(net: PetriNet, start_place: PetriNet.Place, end_place: PetriNet.Place):
-    redo_subnet_transitions = get_reachable_transitions_from_place_to_another(end_place, start_place)
+    redo_subnet_transitions = get_reachable_transitions_from_place_to_another(
+        end_place, start_place
+    )
 
     if len(redo_subnet_transitions) == 0:
         return None, None
 
-    do_subnet_transitions = get_reachable_transitions_from_place_to_another(start_place, end_place)
+    do_subnet_transitions = get_reachable_transitions_from_place_to_another(
+        start_place, end_place
+    )
 
     if len(do_subnet_transitions) == 0:
         raise Exception("This should not be possible!")
@@ -80,8 +93,11 @@ def mine_partial_order(net, end_place, reachability_map):
         if out_size > 1 or (place == end_place and out_size > 0):
             xor_branches = []
             for start_transition in pn_util.post_set(place):
-                new_branch = {node for node in reachability_map[start_transition]
-                              if isinstance(node, PetriNet.Transition)}
+                new_branch = {
+                    node
+                    for node in reachability_map[start_transition]
+                    if isinstance(node, PetriNet.Transition)
+                }
                 xor_branches.append(new_branch)
             union_of_branches = set().union(*xor_branches)
             if place == end_place:
@@ -95,8 +111,10 @@ def mine_partial_order(net, end_place, reachability_map):
     return partition
 
 
-def __combine_parts(transitions_to_group_together: set[PetriNet.Transition],
-                    partition: list[set[PetriNet.Transition]]):
+def __combine_parts(
+    transitions_to_group_together: set[PetriNet.Transition],
+    partition: list[set[PetriNet.Transition]],
+):
     new_partition = []
     new_combined_group = set()
 

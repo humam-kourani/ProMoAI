@@ -1,7 +1,8 @@
-from typing import Union, Set
+from typing import Set, Union
+
 from pm4py.objects.petri_net.obj import PetriNet
-from pm4py.objects.powl.obj import Transition, SilentTransition
 from pm4py.objects.petri_net.utils import petri_utils as pn_util
+from pm4py.objects.powl.obj import SilentTransition, Transition
 
 
 def id_generator():
@@ -19,14 +20,20 @@ def clone_place(net, place, node_map):
 
 
 def clone_transition(net, transition, node_map):
-    cloned_transition = PetriNet.Transition(f"{transition.name}_cloned", transition.label)
+    cloned_transition = PetriNet.Transition(
+        f"{transition.name}_cloned", transition.label
+    )
     net.transitions.add(cloned_transition)
     node_map[transition] = cloned_transition
     return cloned_transition
 
 
-def clone_subnet(net: PetriNet, subnet_transitions: Set[PetriNet.Transition],
-                 start_place: PetriNet.Place, end_place: PetriNet.Place):
+def clone_subnet(
+    net: PetriNet,
+    subnet_transitions: Set[PetriNet.Transition],
+    start_place: PetriNet.Place,
+    end_place: PetriNet.Place,
+):
     subnet_net = PetriNet(f"Subnet_{next(id_generator())}")
     node_map = {}
 
@@ -62,8 +69,12 @@ def locally_identical(p1, p2, transitions):
     return pre1 == pre2 and post1 == post2
 
 
-def apply_partial_order_projection(net: PetriNet, subnet_transitions: Set[PetriNet.Transition],
-                                   start_places: Set[PetriNet.Place], end_places: Set[PetriNet.Place]):
+def apply_partial_order_projection(
+    net: PetriNet,
+    subnet_transitions: Set[PetriNet.Transition],
+    start_places: Set[PetriNet.Place],
+    end_places: Set[PetriNet.Place],
+):
     subnet_net = PetriNet(f"Subnet_{next(id_generator())}")
     node_map = {}
 
@@ -111,8 +122,11 @@ def apply_partial_order_projection(net: PetriNet, subnet_transitions: Set[PetriN
     return subnet_net, new_start_place, new_end_place
 
 
-def add_arc_from_to(source: Union[PetriNet.Place, PetriNet.Transition],
-                    target: Union[PetriNet.Transition, PetriNet.Place], net: PetriNet):
+def add_arc_from_to(
+    source: Union[PetriNet.Place, PetriNet.Transition],
+    target: Union[PetriNet.Transition, PetriNet.Place],
+    net: PetriNet,
+):
     arc = PetriNet.Arc(source, target)
     net.arcs.add(arc)
     source.out_arcs.add(arc)

@@ -1,10 +1,13 @@
 from itertools import combinations
 
 from pm4py import PetriNet
-from pm4py.objects.petri_net.utils import petri_utils as pn_util
 from pm4py.algo.analysis.workflow_net import algorithm as wf_eval
+from pm4py.objects.petri_net.utils import petri_utils as pn_util
 
-from promoai.pn_to_powl.converter_utils.subnet_creation import add_arc_from_to, id_generator
+from promoai.pn_to_powl.converter_utils.subnet_creation import (
+    add_arc_from_to,
+    id_generator,
+)
 
 
 def validate_workflow_net(net: PetriNet):
@@ -26,8 +29,9 @@ def validate_workflow_net(net: PetriNet):
     return start_place, end_place
 
 
-def remove_initial_and_end_silent_activities(net: PetriNet, start_places: set[PetriNet.Place],
-                                             end_places: set[PetriNet.Place]):
+def remove_initial_and_end_silent_activities(
+    net: PetriNet, start_places: set[PetriNet.Place], end_places: set[PetriNet.Place]
+):
     change = True
     while change and len(net.transitions) > 1:
         change = False
@@ -65,13 +69,16 @@ def remove_initial_and_end_silent_activities(net: PetriNet, start_places: set[Pe
 
 def __get_identical_place(place: PetriNet.Place, places_set: set[PetriNet.Place]):
     for other in places_set:
-        if (pn_util.post_set(place) == pn_util.post_set(other)
-                and pn_util.pre_set(place) == pn_util.pre_set(other)):
+        if pn_util.post_set(place) == pn_util.post_set(other) and pn_util.pre_set(
+            place
+        ) == pn_util.pre_set(other):
             return other
     return None
 
 
-def __remove_and_replace_if_present(old_p: PetriNet.Place, new_p: PetriNet.Place, place_set: set[PetriNet.Place]):
+def __remove_and_replace_if_present(
+    old_p: PetriNet.Place, new_p: PetriNet.Place, place_set: set[PetriNet.Place]
+):
     if old_p in place_set:
         place_set.remove(old_p)
         if new_p not in place_set:
@@ -79,7 +86,9 @@ def __remove_and_replace_if_present(old_p: PetriNet.Place, new_p: PetriNet.Place
     return place_set
 
 
-def remove_duplicated_places(net: PetriNet, start_places: set[PetriNet.Place], end_places: set[PetriNet.Place]):
+def remove_duplicated_places(
+    net: PetriNet, start_places: set[PetriNet.Place], end_places: set[PetriNet.Place]
+):
     all_places = list(net.places)
     places_to_keep = {all_places[0]}
     for place in all_places[1:]:
@@ -94,7 +103,9 @@ def remove_duplicated_places(net: PetriNet, start_places: set[PetriNet.Place], e
     return start_places, end_places
 
 
-def remove_unconnected_places(net: PetriNet, start_places: set[PetriNet.Place], end_places: set[PetriNet.Place]):
+def remove_unconnected_places(
+    net: PetriNet, start_places: set[PetriNet.Place], end_places: set[PetriNet.Place]
+):
     places = list(net.places)
     for p in places:
         if len(p.in_arcs) == 0 == len(p.out_arcs):
@@ -136,7 +147,9 @@ def preprocess(net):
                         if arc.target in common_post:
                             pn_util.remove_arc(net, arc)
 
-                new_silent = PetriNet.Transition(f"silent_transition_{next(id_generator())}")
+                new_silent = PetriNet.Transition(
+                    f"silent_transition_{next(id_generator())}"
+                )
                 net.transitions.add(new_silent)
                 add_arc_from_to(new_place, new_silent, net)
                 add_arc_from_to(new_silent, p1, net)
@@ -162,7 +175,9 @@ def preprocess(net):
                         if arc.source in common_pre:
                             pn_util.remove_arc(net, arc)
 
-                new_silent = PetriNet.Transition(f"silent_transition_{next(id_generator())}")
+                new_silent = PetriNet.Transition(
+                    f"silent_transition_{next(id_generator())}"
+                )
                 net.transitions.add(new_silent)
                 add_arc_from_to(p1, new_silent, net)
                 add_arc_from_to(p2, new_silent, net)
@@ -173,14 +188,18 @@ def preprocess(net):
     return net
 
 
-def add_new_start_and_end_if_needed(net, start_places: set[PetriNet.Place], end_places: set[PetriNet.Place]):
+def add_new_start_and_end_if_needed(
+    net, start_places: set[PetriNet.Place], end_places: set[PetriNet.Place]
+):
     if len(start_places) == 0 or len(end_places) == 0:
         raise Exception("This should not happen!")
 
     if len(start_places) > 1:
 
         new_source_id = f"source_{next(id_generator())}"
-        new_source = __redirect_shared_arcs_to_new_place(net, list(start_places), new_source_id)
+        new_source = __redirect_shared_arcs_to_new_place(
+            net, list(start_places), new_source_id
+        )
 
         if new_source:
 
@@ -196,7 +215,9 @@ def add_new_start_and_end_if_needed(net, start_places: set[PetriNet.Place], end_
     if len(end_places) > 1:
 
         new_sink_id = f"sink_{next(id_generator())}"
-        new_sink = __redirect_shared_arcs_to_new_place(net, list(end_places), new_sink_id)
+        new_sink = __redirect_shared_arcs_to_new_place(
+            net, list(end_places), new_sink_id
+        )
 
         if new_sink:
 
@@ -213,7 +234,9 @@ def add_new_start_and_end_if_needed(net, start_places: set[PetriNet.Place], end_
     return start_places, end_places
 
 
-def __redirect_shared_arcs_to_new_place(net, places: list[PetriNet.Place], new_place_id):
+def __redirect_shared_arcs_to_new_place(
+    net, places: list[PetriNet.Place], new_place_id
+):
     shared_pre_set = set(pn_util.pre_set(places[0]))
     for p in places[1:]:
         shared_pre_set &= set(pn_util.pre_set(p))
@@ -227,9 +250,10 @@ def __redirect_shared_arcs_to_new_place(net, places: list[PetriNet.Place], new_p
     for arc in arcs:
         source = arc.source
         target = arc.target
-        if (source in shared_pre_set and target in places) \
-                or (source in places and target in shared_post_set): \
-                pn_util.remove_arc(net, arc)
+        if (source in shared_pre_set and target in places) or (
+            source in places and target in shared_post_set
+        ):
+            pn_util.remove_arc(net, arc)
 
     if len(shared_post_set) > 0 or len(shared_pre_set) > 0:
         new_place = PetriNet.Place(new_place_id)

@@ -1,11 +1,12 @@
 import pm4py
 from pm4py.objects.powl.obj import POWL
+from pm4py.util import constants
+
+from promoai.model_generation import code_extraction
+from promoai.model_generation.model_generation import generate_model
 
 from promoai.pn_to_powl.converter_utils.powl_to_code import translate_powl_to_code
 from promoai.prompting import create_conversation, update_conversation
-from promoai.model_generation.model_generation import generate_model
-from promoai.model_generation import code_extraction
-from pm4py.util import constants
 
 
 class LLMProcessModelGenerator:
@@ -14,49 +15,62 @@ class LLMProcessModelGenerator:
         self.conversation = conversation
 
     @classmethod
-    def from_description(cls, process_description: str, api_key: str, ai_model: str, ai_provider: str):
+    def from_description(
+        cls, process_description: str, api_key: str, ai_model: str, ai_provider: str
+    ):
         init_conversation = create_conversation(process_description)
-        code, process_model, conversation = generate_model(init_conversation,
-                                                                     api_key=api_key,
-                                                                     llm_name=ai_model,
-                                                                     ai_provider=ai_provider)
+        code, process_model, conversation = generate_model(
+            init_conversation,
+            api_key=api_key,
+            llm_name=ai_model,
+            ai_provider=ai_provider,
+        )
         return cls(process_model, conversation)
 
     @classmethod
     def from_powl(cls, powl_model: POWL):
         init_conversation = create_conversation(None)
         conversation = list(init_conversation)
-        conversation.append({"role": "user",
-                             "content": "Instead of starting with a process description, I will give the code of"
-                                        " the initial process model:\n\n" + translate_powl_to_code(powl_model)})
+        conversation.append(
+            {
+                "role": "user",
+                "content": "Instead of starting with a process description, I will give the code of"
+                " the initial process model:\n\n" + translate_powl_to_code(powl_model),
+            }
+        )
         return cls(powl_model, conversation)
-
 
     def get_conversation(self):
         return self.conversation
 
     def get_code(self):
-        return code_extraction.extract_final_python_code(self.conversation[-1]["content"])
+        return code_extraction.extract_final_python_code(
+            self.conversation[-1]["content"]
+        )
 
     def get_powl(self):
         return self.process_model
 
     def get_petri_net(self):
         from pm4py import convert_to_petri_net
+
         return convert_to_petri_net(self.process_model)
 
     def get_bpmn(self):
         net, im, fm = self.get_petri_net()
         from pm4py import convert_to_bpmn
+
         bpmn_model = convert_to_bpmn(net, im, fm)
         return bpmn_model
 
     def update(self, feedback: str, api_key: str, ai_model: str, ai_provider: str):
         self.conversation = update_conversation(self.conversation, feedback)
-        code, self.process_model, self.conversation = generate_model(conversation=self.conversation,
-                                                                     api_key=api_key,
-                                                                     llm_name=ai_model,
-                                                                     ai_provider=ai_provider)
+        code, self.process_model, self.conversation = generate_model(
+            conversation=self.conversation,
+            api_key=api_key,
+            llm_name=ai_model,
+            ai_provider=ai_provider,
+        )
         self.process_model = self.process_model.simplify()
 
     def view_bpmn(self, image_format: str = "svg"):
@@ -72,22 +86,32 @@ class LLMProcessModelGenerator:
 
     def export_bpmn(self, file_path: str, encoding: str = constants.DEFAULT_ENCODING):
         if not file_path.lower().endswith("bpmn"):
-            raise Exception("The provided file path does not have the '.bpmn' extension!")
+            raise Exception(
+                "The provided file path does not have the '.bpmn' extension!"
+            )
         bpmn_model = self.get_bpmn()
         from pm4py.objects.bpmn.exporter import exporter
+
         exporter.apply(bpmn_model, file_path, parameters={"encoding": encoding})
         pm4py.write_bpmn()
 
-    def export_petri_net(self, file_path: str, encoding: str = constants.DEFAULT_ENCODING):
+    def export_petri_net(
+        self, file_path: str, encoding: str = constants.DEFAULT_ENCODING
+    ):
         if not file_path.lower().endswith("pnml"):
-            raise Exception("The provided file path does not have the '.pnml' extension!")
+            raise Exception(
+                "The provided file path does not have the '.pnml' extension!"
+            )
         net, im, fm = self.get_petri_net()
         from pm4py.objects.petri_net.exporter import exporter as petri_exporter
-        petri_exporter.apply(net=net,
-                             initial_marking=im,
-                             final_marking=fm,
-                             output_filename=file_path,
-                             parameters={"encoding": encoding})
+
+        petri_exporter.apply(
+            net=net,
+            initial_marking=im,
+            final_marking=fm,
+            output_filename=file_path,
+            parameters={"encoding": encoding},
+        )
 
 
 # def initialize(process_description: str | None, api_key: str, llm_name: str, ai_provider: str,
