@@ -17,3 +17,23 @@ Run pip install promoai.
 * *Environment:* the app is tested on both Python 3.9 and 3.10.
 * *Dependencies:* all required dependencies are listed in the file 'requirements.txt'.
 * *Packages:* all required packages are listed in the file 'packages.txt'.
+
+## Running locally
+
+### Requirements
+    * [Python >=3.9, <3.11, !3.9.7](https://www.python.org/downloads/)
+    * [Poetry](https://python-poetry.org)
+### Setup
+1. Install the above requirements.
+
+2. Install the dependencies:
+    To install all dependencies and ensure they match the `pyproject.toml` and `poetry.lock` files, run:
+
+    ```sh
+        poetry install --sync
+    ```
+3. Execute the following command to start the app:
+
+    ```sh
+    poetry run python -m streamlit run ./app.py
+    ```
