@@ -16,4 +16,4 @@ Run pip install promoai.
 
 * *Environment:* the app is tested on both Python 3.9 and 3.10.
 * *Dependencies:* all required dependencies are listed in the file 'requirements.txt'.
-* *Packages:* all required packages are listed in the file 'packages.txt'.
+* *Packages:* graphviz.
