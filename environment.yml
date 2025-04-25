@@ -1,0 +1,16 @@
+name: myenv
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - graphviz
+  - pip:
+      - pm4py==2.7.14.2
+      - google-generativeai
+      - anthropic
+      - rustxes
+      - setuptools
+      - streamlit
+      - requests
