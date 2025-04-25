@@ -30,9 +30,15 @@ def run_app():
     )
 
     temp_dir = "temp"
-
-    graphviz_path = "/home/adminuser/.conda/bin"
-    os.environ["PATH"] += os.pathsep + graphviz_path
+    
+    dot_path = shutil.which("dot")
+    
+    if dot_path:
+        dot_dir = os.path.dirname(dot_path)
+        os.environ["PATH"] += os.pathsep + dot_dir
+        print(f"'dot' found at: {dot_path}")
+    else:
+        print("Could not find 'dot'. Is Graphviz installed in your environment?")
 
     if 'provider' not in st.session_state:
         st.session_state['provider'] = DEFAULT_AI_PROVIDER
