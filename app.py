@@ -31,6 +31,9 @@ def run_app():
 
     temp_dir = "temp"
 
+    graphviz_path = "/home/adminuser/.conda/bin"
+    os.environ["PATH"] += os.pathsep + graphviz_path
+
     if 'provider' not in st.session_state:
         st.session_state['provider'] = DEFAULT_AI_PROVIDER
 
