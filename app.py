@@ -155,8 +155,8 @@ def run_app():
                                                              dir=temp_dir) as temp_file:
                                 temp_file.write(contents)
 
-                                bpmn_graph = read_bpmn(temp_file.name)
-                                process_model = promoai.generate_model_from_bpmn(bpmn_graph)
+                            bpmn_graph = read_bpmn(temp_file.name)
+                            process_model = promoai.generate_model_from_bpmn(bpmn_graph)
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
                         elif file_extension == "pnml":
@@ -166,8 +166,8 @@ def run_app():
                             with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".pnml",
                                                              dir=temp_dir) as temp_file:
                                 temp_file.write(contents)
-                                pn, im, fm = read_pnml(temp_file.name)
-                                process_model = promoai.generate_model_from_petri_net(pn)
+                            pn, im, fm = read_pnml(temp_file.name)
+                            process_model = promoai.generate_model_from_petri_net(pn)
 
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -180,7 +180,7 @@ def run_app():
                     except Exception as e:
                         if os.path.exists(temp_dir):
                             shutil.rmtree(temp_dir, ignore_errors=True)
-                        st.error(body="Please upload a semi-block-structured model!", icon="⚠️")
+                        st.error(body=f"Please upload a semi-block-structured model! The error message: {e}", icon="⚠️")
                         return
 
     if 'model_gen' in st.session_state and st.session_state['model_gen']:
