@@ -37,11 +37,11 @@ def run_app():
     for sub in possible_subpaths:
         candidate = os.path.join(base_path, sub, "dot")
         if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-            st.text(f"Found 'dot' at: {candidate}")
+            print(f"Found 'dot' at: {candidate}")
             os.environ["PATH"] += os.pathsep + os.path.dirname(candidate)
             break
     else:
-        st.text("Still couldn't find 'dot' — is Graphviz installed?")
+        st.error(body="Couldn't find 'dot' — is Graphviz installed?", icon="⚠️")
 
     if 'provider' not in st.session_state:
         st.session_state['provider'] = DEFAULT_AI_PROVIDER
