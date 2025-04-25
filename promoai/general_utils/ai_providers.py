@@ -11,9 +11,9 @@ class AIProviders(Enum):
 
 AI_MODEL_DEFAULTS = {
         AIProviders.GOOGLE.value: 'gemini-2.5-pro-exp-03-25',
-        AIProviders.OPENAI.value: 'gpt-4o',
+        AIProviders.OPENAI.value: 'gpt-4.1',
         AIProviders.DEEPSEEK.value: 'deepseek-reasoner',
-        AIProviders.ANTHROPIC.value: 'claude-3-5-sonnet-latest',
+        AIProviders.ANTHROPIC.value: 'claude-3-7-sonnet-latest',
         AIProviders.DEEPINFRA.value: 'meta-llama/Llama-3.2-90B-Vision-Instruct',
         AIProviders.MISTRAL_AI.value: 'mistral-large-latest'
     }
