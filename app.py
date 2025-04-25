@@ -31,14 +31,17 @@ def run_app():
 
     temp_dir = "temp"
     
-    dot_path = shutil.which("dot")
+    base_path = "/home/adminuser/.conda"
+    possible_subpaths = ["bin"] 
     
-    if dot_path:
-        dot_dir = os.path.dirname(dot_path)
-        os.environ["PATH"] += os.pathsep + dot_dir
-        st.text(f"'dot' found at: {dot_path}")
+    for sub in possible_subpaths:
+        candidate = os.path.join(base_path, sub, "dot")
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            st.text(f"Found 'dot' at: {candidate}")
+            os.environ["PATH"] += os.pathsep + os.path.dirname(candidate)
+            break
     else:
-        st.text("Could not find 'dot'. Is Graphviz installed in your environment?")
+        st.text("Still couldn't find 'dot' — is Graphviz installed?")
 
     if 'provider' not in st.session_state:
         st.session_state['provider'] = DEFAULT_AI_PROVIDER
