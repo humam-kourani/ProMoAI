@@ -93,7 +93,7 @@ def run_app():
 
         elif input_type == InputType.DATA.value:
             uploaded_log = st.file_uploader("For **process model discovery**, upload an event log:",
-                                            type=["xes", "xes.gz"],
+                                            type=["xes", "gz"],
                                             help=DISCOVERY_HELP)
             submit_button = st.form_submit_button(label='Run')
             if submit_button:
