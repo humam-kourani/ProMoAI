@@ -4,3 +4,4 @@ streamlit
 requests
 google-generativeai
 anthropic
+rustxes 
