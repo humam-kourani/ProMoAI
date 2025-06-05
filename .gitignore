@@ -129,3 +129,8 @@ dmypy.json
 # the following files are ignored
 *.txt
 */*.txt
+
+# BPMN files
+*.bpmn
+# DS_Store
+.DS_Store

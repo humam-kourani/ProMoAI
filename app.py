@@ -32,6 +32,22 @@ def run_app():
 
     temp_dir = "temp"
 
+    system_dot = shutil.which("dot")
+    if system_dot:
+        print(f"Found system-wide 'dot' at: {system_dot}")
+    else:
+        base_path = "/home/adminuser/.conda"
+        possible_subpaths = ["bin"]
+
+        for sub in possible_subpaths:
+            candidate = os.path.join(base_path, sub, "dot")
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                print(f"Found 'dot' at: {candidate}")
+                os.environ["PATH"] += os.pathsep + os.path.dirname(candidate)
+                break
+        else:
+            st.error(body="Couldn't find 'dot' — is Graphviz installed?", icon="⚠️")
+
     if "provider" not in st.session_state:
         st.session_state["provider"] = DEFAULT_AI_PROVIDER
 
@@ -107,7 +123,7 @@ def run_app():
         elif input_type == InputType.DATA.value:
             uploaded_log = st.file_uploader(
                 "For **process model discovery**, upload an event log:",
-                type=["xes", "xes.gz"],
+                type=["xes", "gz"],
                 help=DISCOVERY_HELP,
             )
             submit_button = st.form_submit_button(label="Run")
@@ -156,10 +172,8 @@ def run_app():
                             ) as temp_file:
                                 temp_file.write(contents)
 
-                                bpmn_graph = read_bpmn(temp_file.name)
-                                process_model = promoai.generate_model_from_bpmn(
-                                    bpmn_graph
-                                )
+                            bpmn_graph = read_bpmn(temp_file.name)
+                            process_model = promoai.generate_model_from_bpmn(bpmn_graph)
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
                         elif file_extension == "pnml":
@@ -170,10 +184,8 @@ def run_app():
                                 mode="wb", delete=False, suffix=".pnml", dir=temp_dir
                             ) as temp_file:
                                 temp_file.write(contents)
-                                pn, im, fm = read_pnml(temp_file.name)
-                                process_model = promoai.generate_model_from_petri_net(
-                                    pn
-                                )
+                            pn, im, fm = read_pnml(temp_file.name)
+                            process_model = promoai.generate_model_from_petri_net(pn)
 
                             shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -190,7 +202,7 @@ def run_app():
                         if os.path.exists(temp_dir):
                             shutil.rmtree(temp_dir, ignore_errors=True)
                         st.error(
-                            body="Please upload a semi-block-structured model!",
+                            body=f"Please upload a semi-block-structured model! The error message: {e}",
                             icon="⚠️",
                         )
                         return

@@ -8,4 +8,4 @@ from promoai.main import (
 )
 
 __name__ = "promoai"
-__version__ = "1.1.2"
+__version__ = "1.1.3"

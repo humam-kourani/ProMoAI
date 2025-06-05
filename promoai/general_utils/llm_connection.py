@@ -105,9 +105,17 @@ def generate_response_with_history(
         role = message["role"]
         text = message["content"]
         if use_responses_api:
+
+            if role == "user":
+                content_type = "input_text"
+            elif role == "assistant":
+                content_type = "output_text"
+            else:
+                raise ValueError(f"Unsupported role: {role}")
+
             processed_message = {
                 "role": role,
-                "content": [{"type": "input_text", "text": text}],
+                "content": [{"type": content_type, "text": text}],
             }
         else:
             processed_message = {"role": role, "content": text}
