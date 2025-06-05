@@ -1,27 +1,26 @@
-[tool.poetry]
+[project]
 name = "promoai"
-version = "1.0.0"
+version = "1.1.3"
 description = ""
-authors = ["Your Name <you@example.com>"]
-license = "GNU General Public License v3.0"
+authors = [{ name = "Humam Kourani", email = "humam.kourani@fit.fraunhofer.de" }]
+requires-python = "!=3.9.7, >=3.9, <3.11"
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "!=3.9.7, >=3.9, <3.11"
-pm4py = "2.7.14.2"
-setuptools = "^78.1.0"
-streamlit = "^1.44.1"
-requests = "^2.32.3"
-google-generativeai = "^0.8.4"
-anthropic = "^0.49.0"
-rustxes = "^0.2.9"
-pre-commit = "^4.2.0"
-autoflake = "2.3.1"
-usort = "1.0.7"
-black = "22.3.0"
-typing-extensions = "^4.13.2"
-
+dependencies = [
+    "pm4py==2.7.14.2",
+    "setuptools==78.1.1",
+    "streamlit>=1.44.1,<2",
+    "requests>=2.32.3,<3",
+    "google-generativeai>=0.8.4,<0.9",
+    "anthropic>=0.49.0,<0.50",
+    "rustxes>=0.2.9,<0.3",
+    "pre-commit>=4.2.0,<5",
+    "autoflake==2.3.1",
+    "usort==1.0.7",
+    "black==22.3.0",
+    "typing-extensions>=4.13.2,<5",
+    "tornado==6.5",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

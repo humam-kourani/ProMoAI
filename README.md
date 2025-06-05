@@ -22,18 +22,18 @@ Run pip install promoai.
 
 ### Requirements
     * [Python >=3.9, <3.11, !3.9.7](https://www.python.org/downloads/)
-    * [Poetry](https://python-poetry.org)
+    * [uv](https://docs.astral.sh/uv/)
 ### Setup
 1. Install the above requirements.
 
 2. Install the dependencies:
-    To install all dependencies and ensure they match the `pyproject.toml` and `poetry.lock` files, run:
+    To install all dependencies and ensure they match the `pyproject.toml` and `uv.lock` files, run:
 
     ```sh
-        poetry install --sync
+        uv sync
     ```
 3. Execute the following command to start the app:
 
     ```sh
-    poetry run python -m streamlit run ./app.py
+    uv run python -m streamlit run ./app.py
     ```
