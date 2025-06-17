@@ -1,22 +1,14 @@
-from aipa import constants
 
-
-def add_prompt_strategies(parameters=None):
-    if parameters is None:
-        parameters = {}
-
-    model_abstraction = parameters.get("model_abstraction", constants.MODEL_ABSTRACTION)
-
-    enable_role_prompting = parameters.get("enable_role_prompting", constants.ENABLE_ROLE_PROMPTING)
-    enable_natural_language_restriction = parameters.get("enable_natural_language_restriction",
-                                                         constants.ENABLE_NATURAL_LANGUAGE_RESTRICTION)
-    enable_chain_of_thought = parameters.get("enable_chain_of_thought", constants.ENABLE_CHAIN_OF_THOUGHT)
-    enable_process_analysis = parameters.get("enable_process_analysis", constants.ENABLE_PROCESS_ANALYSIS)
-    enable_knowledge_injection = parameters.get("enable_knowledge_injection", constants.ENABLE_KNOWLEDGE_INJECTION)
-    enable_few_shots_learning = parameters.get("enable_few_shots_learning", constants.ENABLE_FEW_SHOTS_LEARNING)
-    enable_negative_prompting = parameters.get("enable_negative_prompting", constants.ENABLE_NEGATIVE_PROMPTING)
-    enable_examples = parameters.get("enable_examples", constants.ENABLE_EXAMPLES)
-    enable_company_context = parameters.get("company_context", constants.COMPANY_CONTEXT)
+def add_prompt_strategies(model_abstraction="simplified_xml",
+                          enable_role_prompting=True,
+                          enable_natural_language_restriction=True,
+                          enable_chain_of_thought = False,
+                          enable_process_analysis = False,
+                          enable_knowledge_injection = False,
+                          enable_few_shots_learning = False,
+                          enable_negative_prompting = False,
+                          enable_examples = True,
+                          ):
 
     prompt = ''
 
@@ -64,9 +56,6 @@ def add_prompt_strategies(parameters=None):
             negative_prompt = negative_prompting_with_questions(abstraction)
             prompt += negative_prompt
 
-    if enable_company_context:
-        company_context = add_company_context()
-        prompt += company_context
 
     return prompt
 
@@ -127,16 +116,6 @@ def chain_of_thoughts():
 def role_prompting_process_expert():
     return "- Please take the role of a process expert who is familiar with the domain of the provided process, and use your domain knowledge to better understand and analyze the process, filling in any missing gaps.\n\n"
 
-
-def add_company_context():
-    return "- Note that the users of the tool that will send you the questions are employees of the company who are " \
-           "actually using the modeled processes in their working days and they need support in understanding them. " \
-           "These users do not have any technical knowledge on BPMN or process modeling and they come from different " \
-           "departments with different backgrounds. Your answers to the questions should repect the backgroud of " \
-           "the users by addressing them as employees, avoid referring to the model itself or its elements, and " \
-           "rather talk about the underlying process instead (E.g., You can start the ... process by ...). Note" \
-           " that users can perform two types of actions: in SAP (colored in blue) and non-SAP actions (e.g., through" \
-           " email communication; colored in orange). \n\n "
 
 
 # for the model credit-scoring-asynchronous.bpmn from https://github.com/camunda/bpmn-for-research
