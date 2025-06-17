@@ -106,7 +106,7 @@ def knowledge_injection():
 def natural_language_restriction():
     return ("- Please answer in natural language, so that any user not familiar with the BPMN standard can understand your answer without any technical knowledge; i.e., avoid IDs or technical terms like Task, Gate, flow, lane, etc.; rather use natural language to describe the behavior of the underlying process.\n\n"
             " Please give short, compact answers.\n\n"
-            " Please use the same language as the one used by the user in the last question question (e.g. German).\n\n")
+            " Please use the same language as the one used by the user in the last question question.\n\n")
 
 
 def chain_of_thoughts():

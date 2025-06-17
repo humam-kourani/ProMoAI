@@ -1,8 +1,5 @@
-import traceback
-
-from promoai.aipa.prompting import add_prompt_strategies
 from promoai.aipa.conversation import create_message, create_conversation, create_process_model_representation
-from promoai.general_utils.llm_connection import generate_response_with_history, query_llm
+from promoai.general_utils.llm_connection import query_llm
 
 
 class BPMNAnalyzer:
@@ -27,7 +24,7 @@ class BPMNAnalyzer:
         self.ai_model = ai_model
         self.ai_provider = ai_provider
         self.model_abstraction = model_abstraction
-        self.conversation = create_conversation(
+        self._conversation = create_conversation(
             role="system",
             model_abstraction=model_abstraction,
             enable_role_prompting=enable_role_prompting,
@@ -40,7 +37,7 @@ class BPMNAnalyzer:
             enable_examples=enable_examples
         )
 
-        self.conversation.append(
+        self._conversation.append(
             create_process_model_representation(model_abstraction=model_abstraction,
                                                 role= "system",
                                                 xml_string = bpmn_xml_string,
@@ -51,8 +48,6 @@ class BPMNAnalyzer:
         self.last_response = None
         self.ask(initial_query)
 
-    def get_conversation(self):
-        return self.conversation
 
     def get_last_response(self) -> str | None:
         return self.last_response
@@ -60,11 +55,11 @@ class BPMNAnalyzer:
     def ask(self, query: str) -> str | None:
 
         user_message_content = create_message(query, role="user", model_abstraction=self.model_abstraction)
-        self.conversation.append(user_message_content)
+        self._conversation.append(user_message_content)
 
         self.last_response = query_llm(
-            conversation=self.conversation,
+            conversation=self._conversation,
             api_key=self.api_key,
             llm_name=self.ai_model,
             ai_provider=self.ai_provider)
-        self.conversation.append({"role": "assistant", "content": self.last_response})
+        self._conversation.append({"role": "assistant", "content": self.last_response})
