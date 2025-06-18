@@ -7,3 +7,6 @@ from promoai.main import (
     generate_model_from_text,
     query_bpmn,
 )
+
+__name__ = "promoai"
+__version__ = "1.2.3"

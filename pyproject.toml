@@ -1,6 +1,6 @@
 [project]
 name = 'promoai'
-version = "1.2.2"
+dynamic = ["version"]
 description = "ProMoAI: Process Modeling with Generative AI"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -29,3 +29,4 @@ packages = ["promoai"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
+version = { attr = "promoai.__version__" }
