@@ -1,16 +1,16 @@
+def add_prompt_strategies(
+    model_abstraction="simplified_xml",
+    enable_role_prompting=True,
+    enable_natural_language_restriction=True,
+    enable_chain_of_thought=False,
+    enable_process_analysis=False,
+    enable_knowledge_injection=False,
+    enable_few_shots_learning=False,
+    enable_negative_prompting=False,
+    enable_examples=True,
+):
 
-def add_prompt_strategies(model_abstraction="simplified_xml",
-                          enable_role_prompting=True,
-                          enable_natural_language_restriction=True,
-                          enable_chain_of_thought = False,
-                          enable_process_analysis = False,
-                          enable_knowledge_injection = False,
-                          enable_few_shots_learning = False,
-                          enable_negative_prompting = False,
-                          enable_examples = True,
-                          ):
-
-    prompt = ''
+    prompt = ""
 
     if enable_role_prompting:
         role_prompt = role_prompting()
@@ -55,7 +55,6 @@ def add_prompt_strategies(model_abstraction="simplified_xml",
                 abstraction = process_textual_representation_simplified_xml
             negative_prompt = negative_prompting_with_questions(abstraction)
             prompt += negative_prompt
-
 
     return prompt
 
@@ -104,9 +103,11 @@ def knowledge_injection():
 
 
 def natural_language_restriction():
-    return ("- Please answer in natural language, so that any user not familiar with the BPMN standard can understand your answer without any technical knowledge; i.e., avoid IDs or technical terms like Task, Gate, flow, lane, etc.; rather use natural language to describe the behavior of the underlying process.\n\n"
-            " Please give short, compact answers.\n\n"
-            " Please use the same language as the one used by the user in the last question question.\n\n")
+    return (
+        "- Please answer in natural language, so that any user not familiar with the BPMN standard can understand your answer without any technical knowledge; i.e., avoid IDs or technical terms like Task, Gate, flow, lane, etc.; rather use natural language to describe the behavior of the underlying process.\n\n"
+        " Please give short, compact answers.\n\n"
+        " Please use the same language as the one used by the user in the last question question.\n\n"
+    )
 
 
 def chain_of_thoughts():
@@ -115,7 +116,6 @@ def chain_of_thoughts():
 
 def role_prompting_process_expert():
     return "- Please take the role of a process expert who is familiar with the domain of the provided process, and use your domain knowledge to better understand and analyze the process, filling in any missing gaps.\n\n"
-
 
 
 # for the model credit-scoring-asynchronous.bpmn from https://github.com/camunda/bpmn-for-research
@@ -181,18 +181,18 @@ process_textual_representation_json = """- { $type: bpmn:Collaboration, id: Coll
 - { $type: bpmn:MessageFlow, id: MessageFlow_0bgkr12, sourceRef: Task_06dqs9t, targetRef: IntermediateCatchEvent_0a8iz14, $parent: Collaboration_1y0blh3 }
 - { $type: bpmn:MessageFlow, id: MessageFlow_1nwyn8k, sourceRef: Task_01ouvha, targetRef: IntermediateCatchEvent_0ujob24, $parent: Collaboration_1y0blh3 }\n"""
 
-process_textual_representation_simplified_xml = """<definitions Definitions_1>\n    <collaboration Collaboration_1y0blh3>\n        <participant Participant_1x9zkso> (credit scoring frontend (bank))\n          - processRef: Process_1\n      
-  </participant>\n        <participant Participant_0e81yis> (credit scoring (bank))\n          - processRef: Process_0hiditg\n        </participant>\n        <participant Participant_1xfb3ml> (scoring service)\n          - processRef: Process_1dc1p3b\n        </participant>\n        <messageFlow MessageFlow_1pkfls0>\n          - sourceRef: Participant_1x9zkso\n       
-   - targetRef: StartEvent_1els7eb\n        </messageFlow>\n        <messageFlow MessageFlow_1m6362g>\n          - sourceRef: Task_0l942o9\n          - targetRef: Participant_1x9zkso\n 
+process_textual_representation_simplified_xml = """<definitions Definitions_1>\n    <collaboration Collaboration_1y0blh3>\n        <participant Participant_1x9zkso> (credit scoring frontend (bank))\n          - processRef: Process_1\n
+  </participant>\n        <participant Participant_0e81yis> (credit scoring (bank))\n          - processRef: Process_0hiditg\n        </participant>\n        <participant Participant_1xfb3ml> (scoring service)\n          - processRef: Process_1dc1p3b\n        </participant>\n        <messageFlow MessageFlow_1pkfls0>\n          - sourceRef: Participant_1x9zkso\n
+   - targetRef: StartEvent_1els7eb\n        </messageFlow>\n        <messageFlow MessageFlow_1m6362g>\n          - sourceRef: Task_0l942o9\n          - targetRef: Participant_1x9zkso\n
        </messageFlow>\n        <messageFlow MessageFlow_1i21wes>\n          - sourceRef: Task_1fzfxey\n          - targetRef: Participant_1x9zkso\n        </messageFlow>\n        <messageFlow MessageFlow_1mm30jd>\n          - sourceRef: Task_16winvj\n          - targetRef: StartEvent_0o849un\n        </messageFlow>\n        <messageFlow MessageFlow_1136yi9>\n
- - sourceRef: Task_07vbn2i\n          - targetRef: IntermediateCatchEvent_0yg7cuh\n        </messageFlow>\n        <messageFlow MessageFlow_0bgkr12>\n          - sourceRef: Task_06dqs9t\n          - targetRef: IntermediateCatchEvent_0a8iz14\n        </messageFlow>\n        <messageFlow MessageFlow_1nwyn8k>\n          - sourceRef: Task_01ouvha\n          - targetRef: IntermediateCatchEvent_0ujob24\n        </messageFlow>\n    </collaboration>\n    <process Process_1>\n      - isExecutable: false\n    </process>\n    <process Process_0hiditg>\n       
- <task Task_16winvj (request credit score)/>\n        <exclusiveGateway ExclusiveGateway_11dldcm/>\n        <task Task_1fzfxey (send credit score)/>\n        <endEvent EndEvent_0rp5trg 
-(scoring request handled)/>\n        <task Task_0l942o9 (report delay)/>\n        <sequenceFlow SequenceFlow_0rrtx7k>\n          - sourceRef: StartEvent_1els7eb\n          - targetRef: 
-Task_16winvj\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1i1amgb>\n          - sourceRef: IntermediateCatchEvent_0a8iz14\n          - targetRef: ExclusiveGateway_11dldcm\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1fy80l7>\n          - sourceRef: IntermediateCatchEvent_0yg7cuh\n          - targetRef: ExclusiveGateway_11dldcm\n        
-</sequenceFlow>\n        <sequenceFlow SequenceFlow_12a77en>\n          - sourceRef: ExclusiveGateway_11dldcm\n          - targetRef: Task_1fzfxey\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1nyeozm>\n          - sourceRef: Task_1fzfxey\n          - targetRef: EndEvent_0rp5trg\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_0rf5cxd>\n    
-      - sourceRef: IntermediateCatchEvent_0ujob24\n          - targetRef: Task_0l942o9\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_08fsgff>\n          - sourceRef: Task_0l942o9\n          - targetRef: IntermediateCatchEvent_0a8iz14\n        </sequenceFlow>\n        <intermediateCatchEvent IntermediateCatchEvent_0yg7cuh> (credit score received)\n      
-      <messageEventDefinition/>\n        </intermediateCatchEvent>\n        <intermediateCatchEvent IntermediateCatchEvent_0a8iz14> (credit score received)\n            <messageEventDefinition/>\n        </intermediateCatchEvent>\n        <startEvent StartEvent_1els7eb> (scoring request received)\n            <messageEventDefinition/>\n        </startEvent>\n        <intermediateCatchEvent IntermediateCatchEvent_0ujob24> (delay information received)\n            <messageEventDefinition/>\n        </intermediateCatchEvent>\n        <sequenceFlow SequenceFlow_0o5t8lw>\n          - sourceRef: Task_16winvj\n          - targetRef: EventBasedGateway_02s95tm\n        </sequenceFlow>\n        <eventBasedGateway EventBasedGateway_02s95tm/>\n        <sequenceFlow SequenceFlow_0e97dad>\n          - sourceRef: EventBasedGateway_02s95tm\n          - targetRef: IntermediateCatchEvent_0ujob24\n        </sequenceFlow>\n        
-<sequenceFlow SequenceFlow_1kdut76>\n          - sourceRef: EventBasedGateway_02s95tm\n          - targetRef: IntermediateCatchEvent_0yg7cuh\n        </sequenceFlow>\n    </process>\n  
+ - sourceRef: Task_07vbn2i\n          - targetRef: IntermediateCatchEvent_0yg7cuh\n        </messageFlow>\n        <messageFlow MessageFlow_0bgkr12>\n          - sourceRef: Task_06dqs9t\n          - targetRef: IntermediateCatchEvent_0a8iz14\n        </messageFlow>\n        <messageFlow MessageFlow_1nwyn8k>\n          - sourceRef: Task_01ouvha\n          - targetRef: IntermediateCatchEvent_0ujob24\n        </messageFlow>\n    </collaboration>\n    <process Process_1>\n      - isExecutable: false\n    </process>\n    <process Process_0hiditg>\n
+ <task Task_16winvj (request credit score)/>\n        <exclusiveGateway ExclusiveGateway_11dldcm/>\n        <task Task_1fzfxey (send credit score)/>\n        <endEvent EndEvent_0rp5trg
+(scoring request handled)/>\n        <task Task_0l942o9 (report delay)/>\n        <sequenceFlow SequenceFlow_0rrtx7k>\n          - sourceRef: StartEvent_1els7eb\n          - targetRef:
+Task_16winvj\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1i1amgb>\n          - sourceRef: IntermediateCatchEvent_0a8iz14\n          - targetRef: ExclusiveGateway_11dldcm\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1fy80l7>\n          - sourceRef: IntermediateCatchEvent_0yg7cuh\n          - targetRef: ExclusiveGateway_11dldcm\n
+</sequenceFlow>\n        <sequenceFlow SequenceFlow_12a77en>\n          - sourceRef: ExclusiveGateway_11dldcm\n          - targetRef: Task_1fzfxey\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1nyeozm>\n          - sourceRef: Task_1fzfxey\n          - targetRef: EndEvent_0rp5trg\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_0rf5cxd>\n
+      - sourceRef: IntermediateCatchEvent_0ujob24\n          - targetRef: Task_0l942o9\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_08fsgff>\n          - sourceRef: Task_0l942o9\n          - targetRef: IntermediateCatchEvent_0a8iz14\n        </sequenceFlow>\n        <intermediateCatchEvent IntermediateCatchEvent_0yg7cuh> (credit score received)\n
+      <messageEventDefinition/>\n        </intermediateCatchEvent>\n        <intermediateCatchEvent IntermediateCatchEvent_0a8iz14> (credit score received)\n            <messageEventDefinition/>\n        </intermediateCatchEvent>\n        <startEvent StartEvent_1els7eb> (scoring request received)\n            <messageEventDefinition/>\n        </startEvent>\n        <intermediateCatchEvent IntermediateCatchEvent_0ujob24> (delay information received)\n            <messageEventDefinition/>\n        </intermediateCatchEvent>\n        <sequenceFlow SequenceFlow_0o5t8lw>\n          - sourceRef: Task_16winvj\n          - targetRef: EventBasedGateway_02s95tm\n        </sequenceFlow>\n        <eventBasedGateway EventBasedGateway_02s95tm/>\n        <sequenceFlow SequenceFlow_0e97dad>\n          - sourceRef: EventBasedGateway_02s95tm\n          - targetRef: IntermediateCatchEvent_0ujob24\n        </sequenceFlow>\n
+<sequenceFlow SequenceFlow_1kdut76>\n          - sourceRef: EventBasedGateway_02s95tm\n          - targetRef: IntermediateCatchEvent_0yg7cuh\n        </sequenceFlow>\n    </process>\n
   <process Process_1dc1p3b>\n        <sequenceFlow SequenceFlow_0jh32vv> (no)\n          - sourceRef: ExclusiveGateway_0rtdod4\n          - targetRef: Task_01ouvha\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_052bcer> (yes)\n          - sourceRef: ExclusiveGateway_0rtdod4\n          - targetRef: Task_07vbn2i\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_0t0wbx3>\n          - sourceRef: ExclusiveGateway_125lzox\n          - targetRef: EndEvent_0khk0tq\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_0dkbeo7>\n          - sourceRef: Task_06dqs9t\n          - targetRef: ExclusiveGateway_125lzox\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1xqy47o>\n          - sourceRef: Task_07vbn2i\n          - targetRef: ExclusiveGateway_125lzox\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_08jl5se>\n          - sourceRef: Task_02m68xj\n          - targetRef: Task_06dqs9t\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1yiajt6>\n          - sourceRef: Task_01ouvha\n          - targetRef: Task_02m68xj\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_1nznlgx>\n          - sourceRef: Task_1r15hqs\n          - targetRef: ExclusiveGateway_0rtdod4\n        </sequenceFlow>\n        <sequenceFlow SequenceFlow_158pur5>\n          - sourceRef: StartEvent_0o849un\n          - targetRef: Task_1r15hqs\n        </sequenceFlow>\n        <task Task_07vbn2i (send credit score)/>\n        <task Task_01ouvha (report delay)/>\n        <exclusiveGateway ExclusiveGateway_0rtdod4 (score available?)/>\n        <task Task_06dqs9t (send credit score)/>\n        <endEvent EndEvent_0khk0tq (scoring request handled)/>\n        <exclusiveGateway ExclusiveGateway_125lzox/>\n        <task Task_02m68xj (compute credit score (level 2))/>\n        <task Task_1r15hqs (compute credit score (level 1))/>\n        <startEvent StartEvent_0o849un> (scoring request received)\n            <messageEventDefinition/>\n        </startEvent>\n        <association Association_1ctd4ma>\n          - sourceRef: Task_01ouvha\n          - targetRef: TextAnnotation_0si9ilm\n        </association>\n        <textAnnotation TextAnnotation_0si9ilm>\n
   <text (inkl. ID for message queueing)/>\n        </textAnnotation>\n    </process>\n</definitions>\n"""
 
@@ -200,28 +200,28 @@ examples_json = [
     {
         "input": "How does the bank start the credit scoring process?",
         "output_good": "A bank clerk uses their software to request a credit score for a customer, which kicks off the process in the banking system to communicate with the credit protection agency.",
-        "output_bad": "The bank initiates a BPMN Collaboration, invoking a Participant Process via a MessageFlow to the Schufa service for a credit scoring Event."
+        "output_bad": "The bank initiates a BPMN Collaboration, invoking a Participant Process via a MessageFlow to the Schufa service for a credit scoring Event.",
     },
     {
         "input": "What happens after the bank sends a scoring request to the agency?",
         "output_good": "The agency performs an initial credit scoring, and if this initial scoring is successful, the result is sent back immediately to the bank's system and shown to the clerk.",
-        "output_bad": "Upon receipt of the scoring request, an IntermediateCatchEvent is triggered, leading to an immediate execution of a Task for level 1 scoring, conditioned by an ExclusiveGateway."
+        "output_bad": "Upon receipt of the scoring request, an IntermediateCatchEvent is triggered, leading to an immediate execution of a Task for level 1 scoring, conditioned by an ExclusiveGateway.",
     },
     {
         "input": "What occurs if the initial credit scoring doesn’t give an immediate result?",
         "output_good": "The agency informs the bank's system about the delay and starts a more detailed scoring. The bank's system then sends a notification to the clerk to report the delay.",
-        "output_bad": "If the initial scoring doesn't resolve, a conditional ExclusiveGateway routes the flow to a delay notification Task, subsequently initializing a level 2 scoring Sub-Process."
+        "output_bad": "If the initial scoring doesn't resolve, a conditional ExclusiveGateway routes the flow to a delay notification Task, subsequently initializing a level 2 scoring Sub-Process.",
     },
     {
         "input": "How is the clerk informed of the final credit scoring result?",
         "output_good": "Once the scoring is completed and the result is sent back to the bank's system, it is sent to the clerk's software.",
-        "output_bad": "The final scoring outcome, after processing through a sequence of EventBasedGateways and Task executions, is programmatically dispatched to the initiating Participant's frontend interface."
+        "output_bad": "The final scoring outcome, after processing through a sequence of EventBasedGateways and Task executions, is programmatically dispatched to the initiating Participant's frontend interface.",
     },
     {
         "input": "What does the bank do if the credit score is delayed?",
         "output_good": "The bank's system sends a notification to the clerk to report the delay, and as soon as the final score is ready, it sends the results to the clerk.",
-        "output_bad": "In the event of a scoring delay, an IntermediateCatchEvent captures the timeout, activating a Task to update the UI component of the clerk's software module with a delay notification."
-    }
+        "output_bad": "In the event of a scoring delay, an IntermediateCatchEvent captures the timeout, activating a Task to update the UI component of the clerk's software module with a delay notification.",
+    },
 ]
 
 
@@ -256,8 +256,10 @@ def negative_prompting_with_questions(abstraction):
 
 
 def get_examples():
-    res = "- Now, I will give you example triples of input questions, good answers," \
-          " and bad answers that you should try to avoid:\n"
+    res = (
+        "- Now, I will give you example triples of input questions, good answers,"
+        " and bad answers that you should try to avoid:\n"
+    )
     for i in range(len(examples_json)):
         res += f"Input {i}: {examples_json[i]['input']}\n"
         res += f"Good answer for question {i}: {examples_json[i]['output_good']}\n"

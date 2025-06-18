@@ -1,20 +1,44 @@
-from typing import Callable, List, TypeVar, Any
+from typing import Any, Callable, List, TypeVar
+
+import cohere
+
+import google.generativeai as genai
+import requests
+from openai import OpenAI
+
+from promoai.general_utils import constants
 from promoai.general_utils.ai_providers import AIProviders
 from promoai.prompting.prompt_engineering import ERROR_MESSAGE_FOR_MODEL_GENERATION
-from promoai.general_utils import constants
-
-T = TypeVar('T')
 
 
-def query_llm(conversation: List[dict[str:str]],
-              api_key: str,
-              llm_name: str,
-              ai_provider: str
-              ):
+T = TypeVar("T")
+
+
+def query_llm(
+    conversation: List[dict[str:str]], api_key: str, llm_name: str, ai_provider: str
+):
     if ai_provider == AIProviders.GOOGLE.value:
-        response = generate_response_with_history_google(conversation, api_key, llm_name)
+        response = generate_response_with_history_google(
+            conversation, api_key, llm_name
+        )
     elif ai_provider == AIProviders.ANTHROPIC.value:
-        response = generate_response_with_history_anthropic(conversation, api_key, llm_name)
+        response = generate_response_with_history_anthropic(
+            conversation, api_key, llm_name
+        )
+    elif ai_provider == AIProviders.COHERE.value:
+        response = generate_response_with_history_cohere(
+            conversation, api_key, llm_name
+        )
+    elif ai_provider == AIProviders.OPENROUTER.value:
+        api_url = "https://openrouter.ai/api/v1"
+        response = generate_response_with_openai_api(
+            conversation, api_key, llm_name, api_url=api_url
+        )
+    elif ai_provider == AIProviders.GROK.value:
+        api_url = "https://x.com/api/v1"
+        response = generate_response_with_openai_api(
+            conversation, api_key, llm_name, api_url=api_url
+        )
     else:
         use_responses_api_openai = False
         if ai_provider == AIProviders.DEEPINFRA.value:
@@ -28,20 +52,26 @@ def query_llm(conversation: List[dict[str:str]],
             api_url = "https://api.mistral.ai/v1/"
         else:
             raise Exception(f"AI provider {ai_provider} is not supported!")
-        response = generate_response_with_history(conversation, api_key, llm_name, api_url,
-                                                  use_responses_api=use_responses_api_openai)
+        response = generate_response_with_history(
+            conversation,
+            api_key,
+            llm_name,
+            api_url,
+            use_responses_api=use_responses_api_openai,
+        )
     return response
 
 
-def generate_result_with_error_handling(conversation: List[dict[str:str]],
-                                        extraction_function: Callable[[str, Any], T],
-                                        api_key: str,
-                                        llm_name: str,
-                                        ai_provider: str,
-                                        max_iterations=5,
-                                        additional_iterations=5,
-                                        standard_error_message=ERROR_MESSAGE_FOR_MODEL_GENERATION) \
-        -> tuple[str, any, list[Any]]:
+def generate_result_with_error_handling(
+    conversation: List[dict[str:str]],
+    extraction_function: Callable[[str, Any], T],
+    api_key: str,
+    llm_name: str,
+    ai_provider: str,
+    max_iterations=5,
+    additional_iterations=5,
+    standard_error_message=ERROR_MESSAGE_FOR_MODEL_GENERATION,
+) -> tuple[str, any, list[Any]]:
     error_history = []
     for iteration in range(max_iterations + additional_iterations):
         response = query_llm(conversation, api_key, llm_name, ai_provider)
@@ -55,12 +85,21 @@ def generate_result_with_error_handling(conversation: List[dict[str:str]],
             error_history.append(error_description)
             if constants.ENABLE_PRINTS:
                 print("Error detected in iteration " + str(iteration + 1))
-            new_message = f"Executing your code led to an error! " + standard_error_message + "This is the error" \
-                                                                                              f" message: {error_description}"
+            new_message = (
+                f"Executing your code led to an error! "
+                + standard_error_message
+                + "This is the error"
+                f" message: {error_description}"
+            )
             conversation.append({"role": "user", "content": new_message})
 
-    raise Exception(llm_name + " failed to fix the errors after " + str(max_iterations + 5) +
-                    " iterations! This is the error history: " + str(error_history))
+    raise Exception(
+        llm_name
+        + " failed to fix the errors after "
+        + str(max_iterations + 5)
+        + " iterations! This is the error history: "
+        + str(error_history)
+    )
 
 
 def print_conversation(conversation):
@@ -71,7 +110,9 @@ def print_conversation(conversation):
         print("\n\n")
 
 
-def generate_response_with_history(conversation_history, api_key, llm_name, api_url, use_responses_api=False) -> str:
+def generate_response_with_history(
+    conversation_history, api_key, llm_name, api_url, use_responses_api=False
+) -> str:
     """
     Generates a response from the LLM using the conversation history.
 
@@ -82,21 +123,14 @@ def generate_response_with_history(conversation_history, api_key, llm_name, api_
     :param use_responses_api: set True for OpenAI models only
     :return: The content of the LLM response
     """
-    import requests
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"}
 
     messages_payload = []
     for message in conversation_history:
         role = message["role"]
         text = message["content"]
-        processed_message = {
-            "role": role,
-            "content": text
-        }
+        processed_message = {"role": role, "content": text}
 
         messages_payload.append(processed_message)
 
@@ -110,23 +144,56 @@ def generate_response_with_history(conversation_history, api_key, llm_name, api_
         api_url = api_url[:-1]
 
     if use_responses_api:
-        response = requests.post(api_url + "/responses", headers=headers, json=payload).json()
+        response = requests.post(
+            api_url + "/responses", headers=headers, json=payload
+        ).json()
     else:
-        response = requests.post(api_url + "/chat/completions", headers=headers, json=payload).json()
+        response = requests.post(
+            api_url + "/chat/completions", headers=headers, json=payload
+        ).json()
 
     if "error" in response and response["error"]:
-        raise Exception("Connection failed! This is the error message: " + response["error"]["message"])
+        raise Exception(
+            "Connection failed! This is the error message: "
+            + response["error"]["message"]
+        )
 
     try:
         if use_responses_api:
             return response["output"][-1]["content"][0]["text"]
         else:
             return response["choices"][0]["message"]["content"]
-    except Exception as e:
+    except Exception:
         raise Exception("Connection failed! This is the response: " + str(response))
 
 
-def generate_response_with_history_google(conversation_history, api_key, google_model) -> str:
+def generate_response_with_openai_api(
+    conversation_history, api_key, llm_name, api_url
+) -> str:
+    """
+    Generates a response from the OpenAI API using the conversation history.
+
+    :param conversation_history: The conversation history to be included
+    :param api_key: OpenAI API key
+    :param llm_name: OpenAI model to be used
+    :return: The content of the LLM response
+    """
+    client = OpenAI(
+        base_url=api_url,
+        api_key=api_key,
+    )
+    completion = client.chat.completions.create(
+        model=llm_name, messages=conversation_history
+    )
+    try:
+        return completion.choices[0].message.content
+    except Exception:
+        raise Exception("Connection failed! This is the response: " + str(completion))
+
+
+def generate_response_with_history_google(
+    conversation_history, api_key, google_model
+) -> str:
     """
     Generates a response from the LLM using the conversation history.
 
@@ -135,14 +202,13 @@ def generate_response_with_history_google(conversation_history, api_key, google_
     :param google_model: Google model to be used
     :return: The content of the LLM response
     """
-    import google.generativeai as genai
 
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel(google_model)
     response = model.generate_content(str(conversation_history))
     try:
         return response.text
-    except Exception as e:
+    except Exception:
         raise Exception("Connection failed! This is the response: " + str(response))
 
 
@@ -153,11 +219,79 @@ def generate_response_with_history_anthropic(conversation, api_key, llm_name):
         api_key=api_key,
     )
     message = client.messages.create(
-        model=llm_name,
-        max_tokens=8192,
-        messages=conversation
+        model=llm_name, max_tokens=8192, messages=conversation
     )
     try:
         return message.content[0].text
     except Exception:
         raise Exception("Connection failed! This is the response: " + str(message))
+
+
+def generate_response_with_history_cohere(conversation, api_key, llm_name):
+    """
+    Generates a response from the Cohere API using the conversation history.
+
+    :param conversation: The conversation history to be included
+    :param api_key: Cohere API key
+    :param llm_name: Cohere model to be used
+    :return: The content of the LLM response
+    """
+    client = cohere.ClientV2(api_key)
+    response = client.chat(model=llm_name, messages=conversation)
+    try:
+        return response.message.content[0].text
+    except Exception:
+        raise Exception("Connection failed! This is the response: " + str(response))
+
+
+def generate_response_llm(conversation, api_key, llm_name, ai_provider):
+    """
+    Generates a response from the LLM using the conversation history.
+    :param conversation: The conversation history to be included
+    :param api_key: API key
+    :param llm_name: model to be used
+    :param ai_provider: AI provider to be used
+    :return: The content of the LLM response
+    """
+    response = None
+    if ai_provider == AIProviders.GOOGLE.value:
+        response = generate_response_with_history_google(
+            conversation, api_key, llm_name
+        )
+    elif ai_provider == AIProviders.ANTHROPIC.value:
+        response = generate_response_with_history_anthropic(
+            conversation, api_key, llm_name
+        )
+    elif ai_provider == AIProviders.OPENROUTER.value:
+        response = generate_response_with_openai_api(
+            conversation, api_key, llm_name, api_url="https://openrouter.ai/api/v1"
+        )
+    elif ai_provider == AIProviders.GROK.value:
+        response = generate_response_with_openai_api(
+            conversation, api_key, llm_name, api_url="https://x.com/api/v1"
+        )
+    elif ai_provider == AIProviders.COHERE.value:
+        response = generate_response_with_history_cohere(
+            conversation, api_key, llm_name
+        )
+    else:
+        use_responses_api = False
+        if ai_provider == AIProviders.DEEPINFRA.value:
+            api_url = "https://api.deepinfra.com/v1/openai"
+        elif ai_provider == AIProviders.OPENAI.value:
+            api_url = "https://api.openai.com/v1"
+            use_responses_api = True
+        elif ai_provider == AIProviders.DEEPSEEK.value:
+            api_url = "https://api.deepseek.com/"
+        elif ai_provider == AIProviders.MISTRAL_AI.value:
+            api_url = "https://api.mistral.ai/v1/"
+        else:
+            raise Exception(f"AI provider {ai_provider} is not supported!")
+        response = generate_response_with_history(
+            conversation,
+            api_key,
+            llm_name,
+            api_url,
+            use_responses_api=use_responses_api,
+        )
+    return response

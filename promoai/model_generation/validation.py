@@ -1,5 +1,11 @@
-from pm4py.objects.powl.obj import StrictPartialOrder, Transition, SilentTransition, POWL
 from typing import List as TList, Union
+
+from pm4py.objects.powl.obj import (
+    POWL,
+    SilentTransition,
+    StrictPartialOrder,
+    Transition,
+)
 
 
 def validate_partial_orders_with_missing_transitive_edges(powl: POWL):
@@ -9,13 +15,17 @@ def validate_partial_orders_with_missing_transitive_edges(powl: POWL):
         if not powl.order.is_transitive():
             powl.order.add_transitive_edges()
             if not powl.order.is_irreflexive():
-                raise Exception("The transitive closure of the provided relation violates irreflexivity!")
-    if hasattr(powl, 'children'):
+                raise Exception(
+                    "The transitive closure of the provided relation violates irreflexivity!"
+                )
+    if hasattr(powl, "children"):
         for child in powl.children:
             validate_partial_orders_with_missing_transitive_edges(child)
 
 
-def validate_unique_transitions(powl: POWL) -> TList[Union[Transition, SilentTransition]]:
+def validate_unique_transitions(
+    powl: POWL,
+) -> TList[Union[Transition, SilentTransition]]:
     def _find_duplicates(lst):
         counts = {}
         duplicates = []
@@ -32,18 +42,27 @@ def validate_unique_transitions(powl: POWL) -> TList[Union[Transition, SilentTra
         if isinstance(node, Transition) or isinstance(node, SilentTransition):
             return [node]
 
-        elif hasattr(node, 'children'):
+        elif hasattr(node, "children"):
             leaves = []
             for child in node.children:
                 leaves = leaves + _collect_leaves(child)
             return leaves
         else:
             raise Exception(
-                "Unknown model type! The following model is not a transition and has no children: " + str(node))
+                "Unknown model type! The following model is not a transition and has no children: "
+                + str(node)
+            )
 
     transitions = _collect_leaves(powl)
     duplicate_transitions = _find_duplicates(transitions)
     if len(duplicate_transitions) > 0:
-        raise Exception("Duplicate transitions! Each of the following transitions occurs in multiple submodels: "
-                        + str([t.label if t.label else "silent transition" for t in duplicate_transitions]))
+        raise Exception(
+            "Duplicate transitions! Each of the following transitions occurs in multiple submodels: "
+            + str(
+                [
+                    t.label if t.label else "silent transition"
+                    for t in duplicate_transitions
+                ]
+            )
+        )
     return transitions
