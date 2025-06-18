@@ -1,28 +1,31 @@
 [project]
-name = "promoai"
-version = "1.1.3"
-description = ""
-authors = [{ name = "Humam Kourani", email = "humam.kourani@fit.fraunhofer.de" }]
-requires-python = "!=3.9.7, >=3.9, <3.11"
+name = 'promoai'
+version = "1.2.2"
+description = "ProMoAI: Process Modeling with Generative AI"
 readme = "README.md"
-dependencies = [
-    "pm4py==2.7.14.2",
-    "setuptools==78.1.1",
-    "streamlit>=1.44.1,<2",
-    "requests>=2.32.3,<3",
-    "google-generativeai>=0.8.4,<0.9",
-    "anthropic>=0.49.0,<0.50",
-    "rustxes>=0.2.9,<0.3",
-    "pre-commit>=4.2.0,<5",
-    "autoflake==2.3.1",
-    "usort==1.0.7",
-    "black==22.3.0",
-    "typing-extensions>=4.13.2,<5",
-    "tornado==6.5",
-    "cohere>=5.15.0",
-    "openai>=1.88.0",
+requires-python = ">=3.9"
+license = { text = "AGPL-3.0-or-later" }
+authors = [
+  { name = "Humam Kourani", email = "humam.kourani@fit.fraunhofer.de" }
+]
+keywords = ["process modeling", "business process management", "generative AI"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10"
 ]
 
+[project.urls]
+"Repository" = "https://github.com/humam-kourani/ProMoAI"
+
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["promoai"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

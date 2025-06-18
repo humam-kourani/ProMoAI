@@ -1,4 +1,4 @@
-pm4py==2.7.14.2
+pm4py
 setuptools
 streamlit
 requests
