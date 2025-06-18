@@ -1,4 +1,9 @@
-from pm4py.objects.powl.obj import StrictPartialOrder, OperatorPOWL, Transition, SilentTransition
+from pm4py.objects.powl.obj import (
+    OperatorPOWL,
+    SilentTransition,
+    StrictPartialOrder,
+    Transition,
+)
 from pm4py.objects.process_tree.obj import Operator
 
 from promoai.prompting.prompt_engineering import import_statement
@@ -14,7 +19,7 @@ def translate_powl_to_code(powl_obj):
     Returns:
         A string containing the Python code that constructs the equivalent POWL model using ModelGenerator.
     """
-    code_lines = [import_statement, 'gen = ModelGenerator()']
+    code_lines = [import_statement, "gen = ModelGenerator()"]
 
     var_counter = [0]
 
@@ -39,14 +44,18 @@ def translate_powl_to_code(powl_obj):
             child_vars = [process_powl(child) for child in children]
             var_name = get_new_var_name()
             if operator == Operator.XOR:
-                child_vars_str = ', '.join(child_vars)
+                child_vars_str = ", ".join(child_vars)
                 code_lines.append(f"{var_name} = gen.xor({child_vars_str})")
             elif operator == Operator.LOOP:
                 if len(child_vars) != 2:
-                    raise Exception("A loop of invalid size! This should not be possible!")
+                    raise Exception(
+                        "A loop of invalid size! This should not be possible!"
+                    )
                 do_var = child_vars[0]
                 redo_var = child_vars[1]
-                code_lines.append(f"{var_name} = gen.loop(do={do_var}, redo={redo_var})")
+                code_lines.append(
+                    f"{var_name} = gen.loop(do={do_var}, redo={redo_var})"
+                )
             else:
                 raise Exception("Unknown operator! This should not be possible!")
             return var_name
@@ -71,9 +80,11 @@ def translate_powl_to_code(powl_obj):
                     var = node_var_map[node]
                     dependencies.append(f"({var},)")
 
-            dep_str = ', '.join(dependencies)
+            dep_str = ", ".join(dependencies)
             var_name = get_new_var_name()
-            code_lines.append(f"{var_name} = gen.partial_order(dependencies=[{dep_str}])")
+            code_lines.append(
+                f"{var_name} = gen.partial_order(dependencies=[{dep_str}])"
+            )
             return var_name
 
         else:
@@ -82,4 +93,4 @@ def translate_powl_to_code(powl_obj):
     final_var = process_powl(powl_obj)
     code_lines.append(f"final_model = {final_var}")
 
-    return '\n'.join(code_lines)
+    return "\n".join(code_lines)
