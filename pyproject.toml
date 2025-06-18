@@ -1,10 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = 'promoai'
-dynamic = ["version"]
+dynamic = ["version", "dependencies"]
 description = "ProMoAI: Process Modeling with Generative AI"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "AGPL-3.0-or-later" }
+license = { file = "LICENSE.txt" }
 authors = [
   { name = "Humam Kourani", email = "humam.kourani@fit.fraunhofer.de" }
 ]
@@ -20,12 +24,8 @@ classifiers = [
 [project.urls]
 "Repository" = "https://github.com/humam-kourani/ProMoAI"
 
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-packages = ["promoai"]
+[tool.setuptools.packages.find]
+include = ["promoai*"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
