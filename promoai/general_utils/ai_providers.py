@@ -44,7 +44,7 @@ MAIN_HELP = (
     " which you can **try for free**,"
     " while OpenAI provides GPT models. DeepInfra supports popular open-source large language models like"
     " Meta's LLaMa and also enables custom model deployment. You can also try the models provided by"
-    " DeepSeek, Anthropic, and Mistral AI."
+    " DeepSeek, Anthropic, Mistral AI, Grok, and Cohere."
     " OpenRouter is a platform that allows you to access various models from different providers."
     " For some of them, you may have free access, but you may need to sign up for an account."
 )

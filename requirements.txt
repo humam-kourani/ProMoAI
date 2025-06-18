@@ -5,3 +5,4 @@ requests
 google-generativeai
 anthropic
 rustxes
+cohere

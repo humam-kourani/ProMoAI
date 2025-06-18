@@ -1,10 +1,8 @@
 from typing import Any, Callable, List, TypeVar
 
 import cohere
-
 import google.generativeai as genai
 import requests
-from openai import OpenAI
 
 from promoai.general_utils import constants
 from promoai.general_utils.ai_providers import AIProviders
@@ -29,16 +27,6 @@ def query_llm(
         response = generate_response_with_history_cohere(
             conversation, api_key, llm_name
         )
-    elif ai_provider == AIProviders.OPENROUTER.value:
-        api_url = "https://openrouter.ai/api/v1"
-        response = generate_response_with_openai_api(
-            conversation, api_key, llm_name, api_url=api_url
-        )
-    elif ai_provider == AIProviders.GROK.value:
-        api_url = "https://x.com/api/v1"
-        response = generate_response_with_openai_api(
-            conversation, api_key, llm_name, api_url=api_url
-        )
     else:
         use_responses_api_openai = False
         if ai_provider == AIProviders.DEEPINFRA.value:
@@ -50,6 +38,10 @@ def query_llm(
             api_url = "https://api.deepseek.com/"
         elif ai_provider == AIProviders.MISTRAL_AI.value:
             api_url = "https://api.mistral.ai/v1/"
+        elif ai_provider == AIProviders.OPENROUTER.value:
+            api_url = "https://openrouter.ai/api/v1"
+        elif ai_provider == AIProviders.GROK.value:
+            api_url = "https://x.com/api/v1"
         else:
             raise Exception(f"AI provider {ai_provider} is not supported!")
         response = generate_response_with_history(
@@ -167,30 +159,6 @@ def generate_response_with_history(
         raise Exception("Connection failed! This is the response: " + str(response))
 
 
-def generate_response_with_openai_api(
-    conversation_history, api_key, llm_name, api_url
-) -> str:
-    """
-    Generates a response from the OpenAI API using the conversation history.
-
-    :param conversation_history: The conversation history to be included
-    :param api_key: OpenAI API key
-    :param llm_name: OpenAI model to be used
-    :return: The content of the LLM response
-    """
-    client = OpenAI(
-        base_url=api_url,
-        api_key=api_key,
-    )
-    completion = client.chat.completions.create(
-        model=llm_name, messages=conversation_history
-    )
-    try:
-        return completion.choices[0].message.content
-    except Exception:
-        raise Exception("Connection failed! This is the response: " + str(completion))
-
-
 def generate_response_with_history_google(
     conversation_history, api_key, google_model
 ) -> str:
@@ -242,56 +210,3 @@ def generate_response_with_history_cohere(conversation, api_key, llm_name):
         return response.message.content[0].text
     except Exception:
         raise Exception("Connection failed! This is the response: " + str(response))
-
-
-def generate_response_llm(conversation, api_key, llm_name, ai_provider):
-    """
-    Generates a response from the LLM using the conversation history.
-    :param conversation: The conversation history to be included
-    :param api_key: API key
-    :param llm_name: model to be used
-    :param ai_provider: AI provider to be used
-    :return: The content of the LLM response
-    """
-    response = None
-    if ai_provider == AIProviders.GOOGLE.value:
-        response = generate_response_with_history_google(
-            conversation, api_key, llm_name
-        )
-    elif ai_provider == AIProviders.ANTHROPIC.value:
-        response = generate_response_with_history_anthropic(
-            conversation, api_key, llm_name
-        )
-    elif ai_provider == AIProviders.OPENROUTER.value:
-        response = generate_response_with_openai_api(
-            conversation, api_key, llm_name, api_url="https://openrouter.ai/api/v1"
-        )
-    elif ai_provider == AIProviders.GROK.value:
-        response = generate_response_with_openai_api(
-            conversation, api_key, llm_name, api_url="https://x.com/api/v1"
-        )
-    elif ai_provider == AIProviders.COHERE.value:
-        response = generate_response_with_history_cohere(
-            conversation, api_key, llm_name
-        )
-    else:
-        use_responses_api = False
-        if ai_provider == AIProviders.DEEPINFRA.value:
-            api_url = "https://api.deepinfra.com/v1/openai"
-        elif ai_provider == AIProviders.OPENAI.value:
-            api_url = "https://api.openai.com/v1"
-            use_responses_api = True
-        elif ai_provider == AIProviders.DEEPSEEK.value:
-            api_url = "https://api.deepseek.com/"
-        elif ai_provider == AIProviders.MISTRAL_AI.value:
-            api_url = "https://api.mistral.ai/v1/"
-        else:
-            raise Exception(f"AI provider {ai_provider} is not supported!")
-        response = generate_response_with_history(
-            conversation,
-            api_key,
-            llm_name,
-            api_url,
-            use_responses_api=use_responses_api,
-        )
-    return response
