@@ -1,9 +1,10 @@
 [project]
 name = 'promoai'
+version = "1.2.2"
 description = "ProMoAI: Process Modeling with Generative AI"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { file = "LICENSE.txt" }
+license = { text = "AGPL-3.0-or-later" }
 authors = [
   { name = "Humam Kourani", email = "humam.kourani@fit.fraunhofer.de" }
 ]
@@ -28,4 +29,3 @@ packages = ["promoai"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
-version = { attr = "promoai.__version__" }
