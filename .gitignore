@@ -134,3 +134,8 @@ dmypy.json
 *.bpmn
 # DS_Store
 .DS_Store
+
+uv.lock
+.pre-commit-config.yaml
+
+.devcontainer/
