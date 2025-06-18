@@ -198,7 +198,7 @@ def run_app():
 
                         st.session_state["model_gen"] = process_model
                         st.session_state["feedback"] = []
-                    except Exception:
+                    except Exception as e:
                         if os.path.exists(temp_dir):
                             shutil.rmtree(temp_dir, ignore_errors=True)
                         st.error(
