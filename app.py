@@ -58,11 +58,10 @@ def run_app():
         st.session_state["model_name"] = AI_MODEL_DEFAULTS[st.session_state["provider"]]
 
     with st.expander("🔧 Configuration", expanded=True):
-        provider = st.radio(
+        provider = st.selectbox(
             "Choose AI Provider:",
             options=AI_MODEL_DEFAULTS.keys(),
             index=0,
-            horizontal=True,
             help=MAIN_HELP,
             on_change=update_model_name,
             key="provider",

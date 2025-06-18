@@ -41,7 +41,7 @@ def query_llm(
         elif ai_provider == AIProviders.OPENROUTER.value:
             api_url = "https://openrouter.ai/api/v1"
         elif ai_provider == AIProviders.GROK.value:
-            api_url = "https://x.com/api/v1"
+            api_url = "https://api.x.ai/v1"
         else:
             raise Exception(f"AI provider {ai_provider} is not supported!")
         response = generate_response_with_history(
@@ -135,19 +135,22 @@ def generate_response_with_history(
     if api_url.endswith("/"):
         api_url = api_url[:-1]
 
-    if use_responses_api:
-        response = requests.post(
-            api_url + "/responses", headers=headers, json=payload
-        ).json()
-    else:
-        response = requests.post(
-            api_url + "/chat/completions", headers=headers, json=payload
-        ).json()
+    try:
+        if use_responses_api:
+            response = requests.post(
+                api_url + "/responses", headers=headers, json=payload
+            ).json()
+        else:
+            response = requests.post(
+                api_url + "/chat/completions", headers=headers, json=payload
+            ).json()
+    except Exception as e:
+        raise Exception("Connection to the AI provider failed with the following error:" + str(e))
 
     if "error" in response and response["error"]:
         raise Exception(
             "Connection failed! This is the error message: "
-            + response["error"]["message"]
+            + response["error"]
         )
 
     try:
@@ -171,9 +174,12 @@ def generate_response_with_history_google(
     :return: The content of the LLM response
     """
 
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(google_model)
-    response = model.generate_content(str(conversation_history))
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(google_model)
+        response = model.generate_content(str(conversation_history))
+    except Exception as e:
+        raise Exception("Connection to Google AI failed with the following error:" + str(e))
     try:
         return response.text
     except Exception:
@@ -183,12 +189,15 @@ def generate_response_with_history_google(
 def generate_response_with_history_anthropic(conversation, api_key, llm_name):
     import anthropic
 
-    client = anthropic.Anthropic(
-        api_key=api_key,
-    )
-    message = client.messages.create(
-        model=llm_name, max_tokens=8192, messages=conversation
-    )
+    try:
+        client = anthropic.Anthropic(
+            api_key=api_key,
+        )
+        message = client.messages.create(
+            model=llm_name, max_tokens=8192, messages=conversation
+        )
+    except Exception as e:
+        raise Exception("Connection to Anthropic failed with the following error:" + str(e))
     try:
         return message.content[0].text
     except Exception:
@@ -204,8 +213,11 @@ def generate_response_with_history_cohere(conversation, api_key, llm_name):
     :param llm_name: Cohere model to be used
     :return: The content of the LLM response
     """
-    client = cohere.ClientV2(api_key)
-    response = client.chat(model=llm_name, messages=conversation)
+    try:
+        client = cohere.ClientV2(api_key)
+        response = client.chat(model=llm_name, messages=conversation)
+    except Exception as e:
+        raise Exception("Connection to Cohere failed with the following error:" + str(e))
     try:
         return response.message.content[0].text
     except Exception:
