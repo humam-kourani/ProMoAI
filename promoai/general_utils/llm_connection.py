@@ -145,12 +145,12 @@ def generate_response_with_history(
                 api_url + "/chat/completions", headers=headers, json=payload
             ).json()
     except Exception as e:
-        raise Exception("Connection to the AI provider failed with the following error:" + str(e))
+        raise Exception("Connection to the AI provider failed with the following error: " + str(e))
 
     if "error" in response and response["error"]:
         raise Exception(
-            "Connection failed! This is the error message: "
-            + response["error"]
+            "Connection to the AI provider failed with the following error: "
+            + str(response["error"])
         )
 
     try:
@@ -179,7 +179,7 @@ def generate_response_with_history_google(
         model = genai.GenerativeModel(google_model)
         response = model.generate_content(str(conversation_history))
     except Exception as e:
-        raise Exception("Connection to Google AI failed with the following error:" + str(e))
+        raise Exception("Connection to Google AI failed with the following error: " + str(e))
     try:
         return response.text
     except Exception:
@@ -197,7 +197,7 @@ def generate_response_with_history_anthropic(conversation, api_key, llm_name):
             model=llm_name, max_tokens=8192, messages=conversation
         )
     except Exception as e:
-        raise Exception("Connection to Anthropic failed with the following error:" + str(e))
+        raise Exception("Connection to Anthropic failed with the following error: " + str(e))
     try:
         return message.content[0].text
     except Exception:
@@ -217,7 +217,7 @@ def generate_response_with_history_cohere(conversation, api_key, llm_name):
         client = cohere.ClientV2(api_key)
         response = client.chat(model=llm_name, messages=conversation)
     except Exception as e:
-        raise Exception("Connection to Cohere failed with the following error:" + str(e))
+        raise Exception("Connection to Cohere failed with the following error: " + str(e))
     try:
         return response.message.content[0].text
     except Exception:
