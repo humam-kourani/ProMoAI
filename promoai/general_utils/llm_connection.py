@@ -71,12 +71,12 @@ def _redact(s: str, replacement: str = "******") -> str:
 
 def _user_message(kind: str, extra: Optional[str] = None) -> str:
     base = {
-        "bad_request": "I couldn't understand that request.",
+        "bad_request": "The request failed. Check the model name and availability.",
         "auth": "Authentication failed. Please check your API credentials.",
         "rate_limit": "The service is busy right now. Please try again in a moment.",
         "unavailable": "The model service is temporarily unavailable. Please try again.",
         "timeout": "The request took too long and timed out. Please try again.",
-        "unexpected": "Something went wrong while generating the answer.",
+        "unexpected": "Something went wrong while generating the answer. Check the model name and availability.",
         "unsupported": "This AI provider isn't supported.",
         "provider_mismatch": "There's a mismatch between the provider and the request.",
     }.get(kind, "Something went wrong.")
