@@ -7,6 +7,8 @@ import re
 import time
 
 import requests
+import google.generativeai as genai  # per colleague change
+import cohere  # per colleague change
 
 from promoai.general_utils.ai_providers import AIProviders
 from promoai.prompting.prompt_engineering import ERROR_MESSAGE_FOR_MODEL_GENERATION
@@ -125,7 +127,7 @@ def _requests_post(url: str, *, headers: dict, json_: dict, timeout_s: Tuple[flo
 
 
 # -----------------------------------------------------------------------------
-# Public API
+# Public API (keeps colleague’s provider list; keeps robust handling)
 # -----------------------------------------------------------------------------
 def query_llm(
     conversation: List[dict[str, str]],
@@ -137,6 +139,8 @@ def query_llm(
         return generate_response_with_history_google(conversation, api_key, llm_name)
     elif ai_provider == AIProviders.ANTHROPIC.value:
         return generate_response_with_history_anthropic(conversation, api_key, llm_name)
+    elif ai_provider == AIProviders.COHERE.value:
+        return generate_response_with_history_cohere(conversation, api_key, llm_name)
     else:
         use_responses_api_openai = False
         if ai_provider == AIProviders.DEEPINFRA.value:
@@ -148,6 +152,10 @@ def query_llm(
             api_url = "https://api.deepseek.com"
         elif ai_provider == AIProviders.MISTRAL_AI.value:
             api_url = "https://api.mistral.ai/v1"
+        elif ai_provider == AIProviders.OPENROUTER.value:
+            api_url = "https://openrouter.ai/api/v1"
+        elif ai_provider == AIProviders.GROK.value:
+            api_url = "https://api.x.ai/v1"
         else:
             raise UnsupportedProviderError(_user_message("unsupported"), retryable=False)
 
@@ -226,7 +234,7 @@ def print_conversation(conversation):
 
 
 # -----------------------------------------------------------------------------
-# Provider calls
+# Generic OpenAI-compatible providers (OpenAI, DeepInfra, Mistral chat, Deepseek, OpenRouter, Grok)
 # -----------------------------------------------------------------------------
 def generate_response_with_history(
     conversation_history: List[dict[str, str]],
@@ -267,11 +275,14 @@ def generate_response_with_history(
             return data["output"][-1]["content"][0]["text"]
         else:
             return data["choices"][0]["message"]["content"]
-    except (KeyError, TypeError) as e:
+    except (KeyError, TypeError):
         logger.warning("Unexpected schema from provider: %s", _redact(str(data))[:1000])
         raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
 
 
+# -----------------------------------------------------------------------------
+# Google (Gemini) – fixed to use contents/parts format + system_instruction
+# -----------------------------------------------------------------------------
 def _to_gemini_contents_and_system(
     conversation_history: List[dict[str, str]]
 ) -> Tuple[Optional[str], List[dict]]:
@@ -292,12 +303,7 @@ def _to_gemini_contents_and_system(
                 system_msgs.append(text.strip())
             continue
 
-        if role == "assistant":
-            g_role = "model"
-        else:
-            # Default anything else (incl. 'user') to 'user'
-            g_role = "user"
-
+        g_role = "model" if role == "assistant" else "user"
         contents.append({"role": g_role, "parts": [{"text": text}]})
 
     system_instruction = "\n\n".join(system_msgs) if system_msgs else None
@@ -314,11 +320,6 @@ def generate_response_with_history_google(
     Expects OpenAI-style messages in `conversation_history`.
     """
     try:
-        import google.generativeai as genai
-    except Exception:
-        raise ProviderMismatchError(_user_message("provider_mismatch"), retryable=False)
-
-    try:
         genai.configure(api_key=api_key)
 
         system_instruction, contents = _to_gemini_contents_and_system(conversation_history)
@@ -329,19 +330,16 @@ def generate_response_with_history_google(
         else:
             model = genai.GenerativeModel(model_name=google_model)
 
-        # SDK expects list[Content]; we now pass the normalized "contents"
         response = model.generate_content(contents)
 
-        # Prefer .text, fall back to candidates if needed
         try:
             return response.text  # type: ignore[attr-defined]
         except Exception:
-            # Defensive fallback in case .text is missing
+            # Defensive fallback if .text is missing
             if hasattr(response, "candidates") and response.candidates:
                 cand = response.candidates[0]
                 parts = getattr(cand, "content", None)
                 if parts and getattr(parts, "parts", None):
-                    # Join any text parts
                     texts = [getattr(p, "text", "") for p in parts.parts if getattr(p, "text", "")]
                     if texts:
                         return "\n".join(texts)
@@ -349,7 +347,6 @@ def generate_response_with_history_google(
 
     except Exception as e:
         text = str(e)
-        # Map common cases to user-safe messages
         lower = text.lower()
         if "api key" in lower or "permission" in lower or "unauthorized" in lower:
             raise AuthError(_user_message("auth"), retryable=False)
@@ -357,13 +354,16 @@ def generate_response_with_history_google(
             raise RateLimitError(_user_message("rate_limit"), retryable=True)
         if "timeout" in lower or "timed out" in lower:
             raise TimeoutError(_user_message("timeout"), retryable=True)
-        if "not found" in lower or "model" in lower and ("not" in lower or "unknown" in lower):
+        if "not found" in lower or ("model" in lower and ("not" in lower or "unknown" in lower)):
             raise BadRequestError(_user_message("bad_request"), retryable=False)
 
         logger.error("Google provider error: %s", _redact(text))
         raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
 
 
+# -----------------------------------------------------------------------------
+# Anthropic
+# -----------------------------------------------------------------------------
 def generate_response_with_history_anthropic(
     conversation: List[dict[str, str]],
     api_key: str,
@@ -395,3 +395,38 @@ def generate_response_with_history_anthropic(
             raise TimeoutError(_user_message("timeout"), retryable=True)
         logger.exception("Anthropic provider error: %s", _redact(text))
         raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+
+
+# -----------------------------------------------------------------------------
+# Cohere (v2)
+# -----------------------------------------------------------------------------
+def generate_response_with_history_cohere(
+    conversation: List[dict[str, str]],
+    api_key: str,
+    llm_name: str,
+) -> str:
+    """
+    Generates a response from the Cohere API using the conversation history.
+    """
+    try:
+        client = cohere.ClientV2(api_key)
+        # Cohere v2 accepts OpenAI-style message dicts with 'role' and 'content'
+        response = client.chat(model=llm_name, messages=conversation)
+    except Exception as e:
+        text = str(e)
+        lower = text.lower()
+        if "invalid api key" in lower or "unauthorized" in lower:
+            raise AuthError(_user_message("auth"), retryable=False)
+        if "rate" in lower or "quota" in lower:
+            raise RateLimitError(_user_message("rate_limit"), retryable=True)
+        if "timeout" in lower or "timed out" in lower:
+            raise TimeoutError(_user_message("timeout"), retryable=True)
+        logger.error("Cohere provider error: %s", _redact(text))
+        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+
+    try:
+        # Typical: response.message.content[0].text
+        return response.message.content[0].text  # type: ignore[attr-defined,index]
+    except Exception:
+        logger.warning("Unexpected schema from Cohere: %s", _redact(str(response))[:1000])
+        raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
