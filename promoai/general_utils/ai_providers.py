@@ -20,7 +20,7 @@ AI_MODEL_DEFAULTS = {
     AIProviders.ANTHROPIC.value: "claude-sonnet-4-20250514",
     AIProviders.DEEPINFRA.value: "openai/gpt-oss-20b",
     AIProviders.MISTRAL_AI.value: "mistral-large-latest",
-    AIProviders.OPENROUTER.value: "openai/gpt-oss-20b:free",
+    AIProviders.OPENROUTER.value: "openai/gpt-oss-20b",
     AIProviders.COHERE.value: "command-r-plus",
     AIProviders.GROK.value: "grok-3",
 }
