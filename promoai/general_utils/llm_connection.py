@@ -303,6 +303,10 @@ def generate_response_with_history_google(
     Expects OpenAI-style messages in `conversation_history`.
     """
     try:
+        api_key = api_key.strip()
+        if not api_key:
+            raise Exception("api key not provided")
+
         genai.configure(api_key=api_key)
 
         system_instruction, contents = _to_gemini_contents_and_system(conversation_history)
@@ -333,7 +337,7 @@ def generate_response_with_history_google(
         lower = text.lower()
         if "api key" in lower or "permission" in lower or "unauthorized" in lower:
             raise AuthError(_user_message("auth"), retryable=False)
-        if "rate" in lower or "exceeded" in lower or "quota" in lower:
+        if "rate " in lower or "exceeded" in lower or "quota " in lower:
             raise RateLimitError(_user_message("rate_limit"), retryable=True)
         if "timeout" in lower or "timed out" in lower:
             raise TimeoutError(_user_message("timeout"), retryable=True)
