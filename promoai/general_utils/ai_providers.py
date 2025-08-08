@@ -15,12 +15,12 @@ class AIProviders(Enum):
 
 AI_MODEL_DEFAULTS = {
     AIProviders.GOOGLE.value: "gemini-2.5-pro",
-    AIProviders.OPENAI.value: "gpt-4.1",
+    AIProviders.OPENAI.value: "gpt-5-mini",
     AIProviders.DEEPSEEK.value: "deepseek-reasoner",
-    AIProviders.ANTHROPIC.value: "claude-3-7-sonnet-latest",
-    AIProviders.DEEPINFRA.value: "meta-llama/Llama-3.2-90B-Vision-Instruct",
+    AIProviders.ANTHROPIC.value: "claude-sonnet-4-20250514",
+    AIProviders.DEEPINFRA.value: "openai/gpt-oss-20b",
     AIProviders.MISTRAL_AI.value: "mistral-large-latest",
-    AIProviders.OPENROUTER.value: "mistralai/devstral-small:free",
+    AIProviders.OPENROUTER.value: "openai/gpt-oss-20b",
     AIProviders.COHERE.value: "command-r-plus",
     AIProviders.GROK.value: "grok-3",
 }
