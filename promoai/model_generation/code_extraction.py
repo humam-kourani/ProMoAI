@@ -7,22 +7,35 @@ def extract_final_python_code(response_text):
     allowed_import_path = "promoai.model_generation.generator"
     allowed_import_class = "ModelGenerator"
     any_import_pattern = r"^\s*(from\s+\S+\s+import\s+\S+|import\s+\S+)"
-    allowed_import_pattern = r"^\s*(from\s+" + re.escape(allowed_import_path) + r"\s+import\s+" + re.escape(
-        allowed_import_class) + r"|import\s+" + re.escape(allowed_import_path) + r"\." + re.escape(
-        allowed_import_class) + r")\s*$"
+    allowed_import_pattern = (
+        r"^\s*(from\s+"
+        + re.escape(allowed_import_path)
+        + r"\s+import\s+"
+        + re.escape(allowed_import_class)
+        + r"|import\s+"
+        + re.escape(allowed_import_path)
+        + r"\."
+        + re.escape(allowed_import_class)
+        + r")\s*$"
+    )
 
     matches = re.findall(python_code_pattern, response_text, re.DOTALL)
 
     if matches:
         python_snippet = matches[-1].strip()
-        lines = python_snippet.split('\n')
+        lines = python_snippet.split("\n")
 
         for line in lines:
             if re.match(any_import_pattern, line):
                 if not re.match(allowed_import_pattern, line):
                     raise Exception(
                         "Python snippet does not meet the import statement requirements! Only the following import"
-                        " statement is allowed: " + 'from ' + allowed_import_path + ' import ' + allowed_import_class)
+                        " statement is allowed: "
+                        + "from "
+                        + allowed_import_path
+                        + " import "
+                        + allowed_import_class
+                    )
         return python_snippet
 
     else:
@@ -49,15 +62,17 @@ def execute_code_and_get_variable(code, variable_name):
             if frame.filename == filename:
                 line_number = frame.lineno
                 try:
-                    error_line = code.split('\n')[line_number - 1]
+                    error_line = code.split("\n")[line_number - 1]
                 except IndexError:
                     error_line = "Line number out of range."
                 break
 
         if line_number:
-            error_details = f"Error occurred at line {line_number}: \"{error_line}\" with message: {error_msg}"
+            error_details = f'Error occurred at line {line_number}: "{error_line}" with message: {error_msg}'
         else:
-            error_details = f"Error occurred with message: {error_msg}. \n The error occurred with trying to execute " \
-                            f"the following extracted code: {code}. "
+            error_details = (
+                f"Error occurred with message: {error_msg}. \n The error occurred with trying to execute "
+                f"the following extracted code: {code}. "
+            )
 
         raise Exception(error_details)

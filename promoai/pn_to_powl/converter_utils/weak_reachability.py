@@ -1,4 +1,5 @@
 from collections import deque
+
 from pm4py.objects.petri_net.obj import PetriNet
 from pm4py.objects.petri_net.utils import petri_utils as pn_util
 
@@ -19,8 +20,9 @@ def get_simplified_reachability_graph(net: PetriNet):
     return graph
 
 
-def get_reachable_transitions_from_place_to_another(start_place: PetriNet.Place,
-                                                    end_place: PetriNet.Place):
+def get_reachable_transitions_from_place_to_another(
+    start_place: PetriNet.Place, end_place: PetriNet.Place
+):
     visited = set()
     queue = deque()
     queue.append(start_place)

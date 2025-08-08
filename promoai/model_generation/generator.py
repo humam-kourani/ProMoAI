@@ -1,5 +1,12 @@
 import pm4py
-from pm4py.objects.powl.obj import Transition, SilentTransition, StrictPartialOrder, OperatorPOWL, Operator, POWL
+from pm4py.objects.powl.obj import (
+    Operator,
+    OperatorPOWL,
+    POWL,
+    SilentTransition,
+    StrictPartialOrder,
+    Transition,
+)
 
 
 def get_node_type(node):
@@ -23,7 +30,6 @@ class ModelGenerator:
         self.used_as_submodel = []
         self.nested_partial_orders = enable_nested_partial_orders
         self.copy_duplicates = copy_duplicates
-        pass
 
     def activity(self, label):
         return Transition(label)
@@ -39,16 +45,19 @@ class ModelGenerator:
                 node = self.activity(node)
             elif not isinstance(node, POWL):
                 raise Exception(
-                    f"Only POWL models are accepted as submodels! You provide instead: {type(node)}.")
+                    f"Only POWL models are accepted as submodels! You provide instead: {type(node)}."
+                )
             if node in self.used_as_submodel:
                 if self.copy_duplicates:
                     res = node.copy()
                 else:
                     node_type = get_node_type(node)
-                    raise Exception(f"Ensure that"
-                                    f" each submodel is used uniquely! Avoid trying to"
-                                    f" reuse submodels that were used as children of other constructs (xor, loop,"
-                                    f" or partial_order) before! The error occured when trying to reuse a node of type {node_type}.")
+                    raise Exception(
+                        f"Ensure that"
+                        f" each submodel is used uniquely! Avoid trying to"
+                        f" reuse submodels that were used as children of other constructs (xor, loop,"
+                        f" or partial_order) before! The error occured when trying to reuse a node of type {node_type}."
+                    )
             else:
                 res = node
         self.used_as_submodel.append(res)
@@ -63,7 +72,9 @@ class ModelGenerator:
 
     def loop(self, do, redo):
         if do is None and redo is None:
-            raise Exception("Cannot create an empty loop with both the do and redo parts missing!")
+            raise Exception(
+                "Cannot create an empty loop with both the do and redo parts missing!"
+            )
         children = [self.create_model(do), self.create_model(redo)]
         res = OperatorPOWL(Operator.LOOP, children)
         return res
@@ -79,8 +90,10 @@ class ModelGenerator:
                 if dep not in list_children:
                     list_children.append(dep)
             else:
-                raise Exception('Invalid dependencies for the partial order! You should provide a list that contains'
-                                ' tuples of POWL models!')
+                raise Exception(
+                    "Invalid dependencies for the partial order! You should provide a list that contains"
+                    " tuples of POWL models!"
+                )
         if len(list_children) == 1:
             return list_children[0]
         if len(list_children) == 0:
@@ -95,11 +108,13 @@ class ModelGenerator:
         else:
             for child in children:
                 if isinstance(child, StrictPartialOrder):
-                    raise Exception("Do not use partial orders as 'direct children' of other partial orders."
-                                    " Instead, combine dependencies at the same hierarchical level. Note that it is"
-                                    " CORRECT to have 'partial_order > xor/loop > partial_order' in the hierarchy,"
-                                    " while it is"
-                                    " INCORRECT to have 'partial_order > partial_order' in the hierarchy.'")
+                    raise Exception(
+                        "Do not use partial orders as 'direct children' of other partial orders."
+                        " Instead, combine dependencies at the same hierarchical level. Note that it is"
+                        " CORRECT to have 'partial_order > xor/loop > partial_order' in the hierarchy,"
+                        " while it is"
+                        " INCORRECT to have 'partial_order > partial_order' in the hierarchy.'"
+                    )
 
         order = StrictPartialOrder(list(children.values()))
         for dep in dependencies:

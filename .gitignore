@@ -126,6 +126,12 @@ dmypy.json
 .vscode
 .idea
 
-# the following files are ignored
-*.txt
-*/*.txt
+# BPMN files
+*.bpmn
+# DS_Store
+.DS_Store
+
+uv.lock
+.pre-commit-config.yaml
+
+.devcontainer/
