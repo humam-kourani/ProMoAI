@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Callable, List, TypeVar, Any, Optional, Tuple
 import logging
 import json
-import os
 import re
 import time
 
@@ -20,7 +19,6 @@ T = TypeVar("T")
 # -----------------------------------------------------------------------------
 logger = logging.getLogger(__name__)
 if not logger.handlers:
-    # Safe default console handler; app can override
     _h = logging.StreamHandler()
     _h.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
     logger.addHandler(_h)
@@ -54,8 +52,8 @@ class UnexpectedResponseError(BaseLLMError): ...
 # Helpers
 # -----------------------------------------------------------------------------
 _SECRET_PATTERNS = [
-    re.compile(r"sk-[A-Za-z0-9]{10,}"),   # OpenAI-ish
-    re.compile(r"ya29\.[A-Za-z0-9\-_\.]{20,}"),  # Google
+    re.compile(r"sk-[A-Za-z0-9]{10,}"),                 # OpenAI-style keys
+    re.compile(r"ya29\.[A-Za-z0-9\-\._]{20,}"),         # Google access tokens
 ]
 
 def _redact(s: str, replacement: str = "******") -> str:
@@ -64,7 +62,6 @@ def _redact(s: str, replacement: str = "******") -> str:
     redacted = s
     for pat in _SECRET_PATTERNS:
         redacted = pat.sub(replacement, redacted)
-    # Also strip long bearer tokens if someone logs headers by accident
     redacted = re.sub(r"Bearer\s+[A-Za-z0-9\-\._]{8,}", "Bearer ******", redacted, flags=re.I)
     return redacted
 
@@ -81,7 +78,6 @@ def _user_message(kind: str, extra: Optional[str] = None) -> str:
         "provider_mismatch": "There's a mismatch between the provider and the request.",
     }.get(kind, "Something went wrong.")
     if extra:
-        # Append a short, user-friendly tail (no internals)
         return f"{base} {extra}".strip()
     return base
 
@@ -94,7 +90,6 @@ def _raise_for_status(resp: requests.Response) -> None:
     except Exception:
         payload = {}
 
-    # Avoid leaking provider messages to users; only log them.
     provider_error = payload.get("error") or payload.get("message") or payload
     safe_log = _redact(json.dumps(provider_error, ensure_ascii=False)[:4000])
     logger.debug("Provider HTTP %s response body: %s", status, safe_log)
@@ -108,7 +103,6 @@ def _raise_for_status(resp: requests.Response) -> None:
     if status in (500, 502, 503, 504):
         raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
 
-    # Unknown non-2xx
     raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
 
 
@@ -116,7 +110,6 @@ def _requests_post(url: str, *, headers: dict, json_: dict, timeout_s: Tuple[flo
     try:
         resp = requests.post(url, headers=headers, json=json_, timeout=timeout_s)
     except requests.Timeout:
-        # Retryable timeout
         raise TimeoutError(_user_message("timeout"), retryable=True)
     except requests.RequestException as e:
         logger.warning("Network error to %s: %s", url, _redact(str(e)))
@@ -128,7 +121,6 @@ def _requests_post(url: str, *, headers: dict, json_: dict, timeout_s: Tuple[flo
     try:
         return resp.json()
     except ValueError:
-        # Successful status but not JSON
         raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
 
 
@@ -194,14 +186,11 @@ def generate_result_with_error_handling(
             code, result = extraction_function(response, auto_duplicate)
             return code, result, conversation
         except BaseLLMError as e:
-            # Our typed errors (from provider or parsing)
             error_history.append(e.user_message)
             if constants.ENABLE_PRINTS:
                 print(f"Error detected in iteration {iteration + 1}: {e.user_message}")
-            # If not retryable, bail early with the user-safe text
             if not e.retryable:
                 raise e
-            # Retryable: ask the model to self-correct
             new_message = (
                 "Executing your code led to an error. "
                 f"{standard_error_message} "
@@ -209,7 +198,6 @@ def generate_result_with_error_handling(
             )
             conversation.append({"role": "user", "content": new_message})
         except Exception as e:
-            # Unknown/parse-time error: log details, show safe text
             safe = _user_message("unexpected")
             error_history.append(safe)
             logger.exception("Unexpected parsing/extraction error: %s", _redact(str(e)))
@@ -222,7 +210,6 @@ def generate_result_with_error_handling(
             )
             conversation.append({"role": "user", "content": new_message})
 
-    # If we got here, retries failed—return a concise, user-safe summary
     fail_msg = (
         f"{llm_name} couldn't fix the errors after {total_iters} attempts. "
         "Please try again later."
@@ -269,10 +256,8 @@ def generate_response_with_history(
     api_url = api_url.rstrip("/")
     url = f"{api_url}{endpoint}"
 
-    # Short connect timeout, reasonable read timeout
     data = _requests_post(url, headers=headers, json_=payload, timeout_s=(3.05, 60))
 
-    # Provider-level error objects sometimes come back with 200; check defensively
     if isinstance(data, dict) and data.get("error"):
         logger.warning("Provider returned error object with 200: %s", _redact(str(data.get("error"))))
         raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
@@ -287,13 +272,46 @@ def generate_response_with_history(
         raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
 
 
+def _to_gemini_contents_and_system(
+    conversation_history: List[dict[str, str]]
+) -> Tuple[Optional[str], List[dict]]:
+    """
+    Convert OpenAI-style messages to Gemini contents format:
+    - system messages -> system_instruction (string, joined with \n\n)
+    - user messages   -> {'role': 'user',  'parts': [{'text': ...}]}
+    - assistant msgs  -> {'role': 'model', 'parts': [{'text': ...}]}
+    """
+    system_msgs: List[str] = []
+    contents: List[dict] = []
+
+    for m in conversation_history:
+        role = m.get("role")
+        text = m.get("content", "")
+        if role == "system":
+            if isinstance(text, str) and text.strip():
+                system_msgs.append(text.strip())
+            continue
+
+        if role == "assistant":
+            g_role = "model"
+        else:
+            # Default anything else (incl. 'user') to 'user'
+            g_role = "user"
+
+        contents.append({"role": g_role, "parts": [{"text": text}]})
+
+    system_instruction = "\n\n".join(system_msgs) if system_msgs else None
+    return system_instruction, contents
+
+
 def generate_response_with_history_google(
     conversation_history: List[dict[str, str]],
     api_key: str,
     google_model: str,
 ) -> str:
     """
-    Generates a response from the LLM using the conversation history.
+    Generates a response from the Google (Gemini) API using the conversation history.
+    Expects OpenAI-style messages in `conversation_history`.
     """
     try:
         import google.generativeai as genai
@@ -302,25 +320,47 @@ def generate_response_with_history_google(
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(google_model)
-        # Keep the input small + structured; avoid dumping internals in errors
-        response = model.generate_content(conversation_history)
-        return response.text  # type: ignore[attr-defined]
-    except genai.types.generation_types.StopCandidateException as e:  # type: ignore[attr-defined]
-        logger.info("Google stop condition: %s", _redact(str(e)))
-        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
-    except genai.types.generation_types.BlockedPromptException as e:  # type: ignore[attr-defined]
-        logger.info("Google safety block: %s", _redact(str(e)))
-        raise BadRequestError(_user_message("bad_request"), retryable=False)
+
+        system_instruction, contents = _to_gemini_contents_and_system(conversation_history)
+
+        # Instantiate model with system_instruction if present
+        if system_instruction:
+            model = genai.GenerativeModel(model_name=google_model, system_instruction=system_instruction)
+        else:
+            model = genai.GenerativeModel(model_name=google_model)
+
+        # SDK expects list[Content]; we now pass the normalized "contents"
+        response = model.generate_content(contents)
+
+        # Prefer .text, fall back to candidates if needed
+        try:
+            return response.text  # type: ignore[attr-defined]
+        except Exception:
+            # Defensive fallback in case .text is missing
+            if hasattr(response, "candidates") and response.candidates:
+                cand = response.candidates[0]
+                parts = getattr(cand, "content", None)
+                if parts and getattr(parts, "parts", None):
+                    # Join any text parts
+                    texts = [getattr(p, "text", "") for p in parts.parts if getattr(p, "text", "")]
+                    if texts:
+                        return "\n".join(texts)
+            raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
+
     except Exception as e:
         text = str(e)
-        if "API key" in text or "permission" in text.lower():
+        # Map common cases to user-safe messages
+        lower = text.lower()
+        if "api key" in lower or "permission" in lower or "unauthorized" in lower:
             raise AuthError(_user_message("auth"), retryable=False)
-        if "rate" in text.lower():
+        if "rate" in lower or "exceeded" in lower or "quota" in lower:
             raise RateLimitError(_user_message("rate_limit"), retryable=True)
-        if "timeout" in text.lower():
+        if "timeout" in lower or "timed out" in lower:
             raise TimeoutError(_user_message("timeout"), retryable=True)
-        logger.exception("Google provider error: %s", _redact(text))
+        if "not found" in lower or "model" in lower and ("not" in lower or "unknown" in lower):
+            raise BadRequestError(_user_message("bad_request"), retryable=False)
+
+        logger.error("Google provider error: %s", _redact(text))
         raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
 
 
