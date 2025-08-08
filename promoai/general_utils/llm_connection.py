@@ -135,8 +135,6 @@ def query_llm(
     llm_name: str,
     ai_provider: str,
 ) -> str:
-    print(conversation)
-
     if ai_provider == AIProviders.GOOGLE.value:
         return generate_response_with_history_google(conversation, api_key, llm_name)
     elif ai_provider == AIProviders.ANTHROPIC.value:
