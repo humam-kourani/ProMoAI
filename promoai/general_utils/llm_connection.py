@@ -34,10 +34,18 @@ class BaseLLMError(Exception):
     user_message: str
     retryable: bool
 
-    def __init__(self, user_message: str, *, retryable: bool = False):
-        super().__init__(user_message)
+    def __init__(self, user_message: str, *, retryable: bool = False, details: Optional[str] = None):
+        """
+        user_message -> Short, user-friendly text to show first.
+        details -> Full technical details to append in the exception message.
+        """
         self.user_message = user_message
         self.retryable = retryable
+        if details:
+            full_message = f"{user_message}\n\nDetails: {details}"
+        else:
+            full_message = user_message
+        super().__init__(full_message)
 
 
 class BadRequestError(BaseLLMError): ...
@@ -97,33 +105,33 @@ def _raise_for_status(resp: requests.Response) -> None:
     logger.debug("Provider HTTP %s response body: %s", status, safe_log)
 
     if status in (400, 422):
-        raise BadRequestError(_user_message("bad_request"), retryable=False)
+        raise BadRequestError(_user_message("bad_request"), retryable=False, details=safe_log)
     if status in (401, 403):
-        raise AuthError(_user_message("auth"), retryable=False)
+        raise AuthError(_user_message("auth"), retryable=False, details=safe_log)
     if status in (429,):
-        raise RateLimitError(_user_message("rate_limit"), retryable=True)
+        raise RateLimitError(_user_message("rate_limit"), retryable=True, details=safe_log)
     if status in (500, 502, 503, 504):
-        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True, details=safe_log)
 
-    raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
+    raise UnexpectedResponseError(_user_message("unexpected"), retryable=True, details=safe_log)
 
 
 def _requests_post(url: str, *, headers: dict, json_: dict, timeout_s: Tuple[float, float]) -> dict:
     try:
         resp = requests.post(url, headers=headers, json=json_, timeout=timeout_s)
-    except requests.Timeout:
-        raise TimeoutError(_user_message("timeout"), retryable=True)
+    except requests.Timeout as e:
+        raise TimeoutError(_user_message("timeout"), retryable=True, details=str(e))
     except requests.RequestException as e:
         logger.warning("Network error to %s: %s", url, _redact(str(e)))
-        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True, details=str(e))
 
     if not (200 <= resp.status_code < 300):
         _raise_for_status(resp)
 
     try:
         return resp.json()
-    except ValueError:
-        raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
+    except ValueError as e:
+        raise UnexpectedResponseError(_user_message("unexpected"), retryable=True, details=str(e))
 
 
 # -----------------------------------------------------------------------------
@@ -251,30 +259,24 @@ def generate_response_with_history(
 
     if isinstance(data, dict) and data.get("error"):
         logger.warning("Provider returned error object with 200: %s", _redact(str(data.get("error"))))
-        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True, details=str(data.get("error")))
 
     try:
         if use_responses_api:
             return data["output"][-1]["content"][0]["text"]
         else:
             return data["choices"][0]["message"]["content"]
-    except (KeyError, TypeError):
+    except (KeyError, TypeError) as e:
         logger.warning("Unexpected schema from provider: %s", _redact(str(data))[:1000])
-        raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
+        raise UnexpectedResponseError(_user_message("unexpected"), retryable=True, details=str(e))
 
 
 # -----------------------------------------------------------------------------
-# Google (Gemini) – fixed to use contents/parts format + system_instruction
+# Google (Gemini)
 # -----------------------------------------------------------------------------
 def _to_gemini_contents_and_system(
     conversation_history: List[dict[str, str]]
 ) -> Tuple[Optional[str], List[dict]]:
-    """
-    Convert OpenAI-style messages to Gemini contents format:
-    - system messages -> system_instruction (string, joined with \n\n)
-    - user messages   -> {'role': 'user',  'parts': [{'text': ...}]}
-    - assistant msgs  -> {'role': 'model', 'parts': [{'text': ...}]}
-    """
     system_msgs: List[str] = []
     contents: List[dict] = []
 
@@ -298,20 +300,14 @@ def generate_response_with_history_google(
     api_key: str,
     google_model: str,
 ) -> str:
-    """
-    Generates a response from the Google (Gemini) API using the conversation history.
-    Expects OpenAI-style messages in `conversation_history`.
-    """
     try:
         api_key = api_key.strip()
         if not api_key:
             raise Exception("api key not provided")
 
         genai.configure(api_key=api_key)
-
         system_instruction, contents = _to_gemini_contents_and_system(conversation_history)
 
-        # Instantiate model with system_instruction if present
         if system_instruction:
             model = genai.GenerativeModel(model_name=google_model, system_instruction=system_instruction)
         else:
@@ -322,7 +318,6 @@ def generate_response_with_history_google(
         try:
             return response.text  # type: ignore[attr-defined]
         except Exception:
-            # Defensive fallback if .text is missing
             if hasattr(response, "candidates") and response.candidates:
                 cand = response.candidates[0]
                 parts = getattr(cand, "content", None)
@@ -336,16 +331,16 @@ def generate_response_with_history_google(
         text = str(e)
         lower = text.lower()
         if "api key" in lower or "permission" in lower or "unauthorized" in lower:
-            raise AuthError(_user_message("auth"), retryable=False)
+            raise AuthError(_user_message("auth"), retryable=False, details=text)
         if "rate " in lower or "exceeded" in lower or "quota " in lower:
-            raise RateLimitError(_user_message("rate_limit"), retryable=True)
+            raise RateLimitError(_user_message("rate_limit"), retryable=True, details=text)
         if "timeout" in lower or "timed out" in lower:
-            raise TimeoutError(_user_message("timeout"), retryable=True)
+            raise TimeoutError(_user_message("timeout"), retryable=True, details=text)
         if "not found" in lower or ("model" in lower and ("not" in lower or "unknown" in lower)):
-            raise BadRequestError(_user_message("bad_request"), retryable=False)
+            raise BadRequestError(_user_message("bad_request"), retryable=False, details=text)
 
         logger.error("Google provider error: %s", _redact(text))
-        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True, details=text)
 
 
 # -----------------------------------------------------------------------------
@@ -358,8 +353,8 @@ def generate_response_with_history_anthropic(
 ) -> str:
     try:
         import anthropic
-    except Exception:
-        raise ProviderMismatchError(_user_message("provider_mismatch"), retryable=False)
+    except Exception as e:
+        raise ProviderMismatchError(_user_message("provider_mismatch"), retryable=False, details=str(e))
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
@@ -369,51 +364,46 @@ def generate_response_with_history_anthropic(
             messages=conversation,
         )
         return message.content[0].text  # type: ignore[index]
-    except anthropic.RateLimitError:
-        raise RateLimitError(_user_message("rate_limit"), retryable=True)
-    except anthropic.AuthenticationError:
-        raise AuthError(_user_message("auth"), retryable=False)
+    except anthropic.RateLimitError as e:
+        raise RateLimitError(_user_message("rate_limit"), retryable=True, details=str(e))
+    except anthropic.AuthenticationError as e:
+        raise AuthError(_user_message("auth"), retryable=False, details=str(e))
     except anthropic.APIStatusError as e:
         logger.warning("Anthropic APIStatusError: %s", _redact(str(e)))
-        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True, details=str(e))
     except Exception as e:
         text = str(e)
         if "timeout" in text.lower():
-            raise TimeoutError(_user_message("timeout"), retryable=True)
+            raise TimeoutError(_user_message("timeout"), retryable=True, details=text)
         logger.exception("Anthropic provider error: %s", _redact(text))
-        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True, details=text)
 
 
 # -----------------------------------------------------------------------------
-# Cohere (v2)
+# Cohere
 # -----------------------------------------------------------------------------
 def generate_response_with_history_cohere(
     conversation: List[dict[str, str]],
     api_key: str,
     llm_name: str,
 ) -> str:
-    """
-    Generates a response from the Cohere API using the conversation history.
-    """
     try:
         client = cohere.ClientV2(api_key)
-        # Cohere v2 accepts OpenAI-style message dicts with 'role' and 'content'
         response = client.chat(model=llm_name, messages=conversation)
     except Exception as e:
         text = str(e)
         lower = text.lower()
         if "invalid api key" in lower or "unauthorized" in lower:
-            raise AuthError(_user_message("auth"), retryable=False)
+            raise AuthError(_user_message("auth"), retryable=False, details=text)
         if "rate" in lower or "quota" in lower:
-            raise RateLimitError(_user_message("rate_limit"), retryable=True)
+            raise RateLimitError(_user_message("rate_limit"), retryable=True, details=text)
         if "timeout" in lower or "timed out" in lower:
-            raise TimeoutError(_user_message("timeout"), retryable=True)
+            raise TimeoutError(_user_message("timeout"), retryable=True, details=text)
         logger.error("Cohere provider error: %s", _redact(text))
-        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True)
+        raise ServiceUnavailableError(_user_message("unavailable"), retryable=True, details=text)
 
     try:
-        # Typical: response.message.content[0].text
         return response.message.content[0].text  # type: ignore[attr-defined,index]
-    except Exception:
+    except Exception as e:
         logger.warning("Unexpected schema from Cohere: %s", _redact(str(response))[:1000])
-        raise UnexpectedResponseError(_user_message("unexpected"), retryable=True)
+        raise UnexpectedResponseError(_user_message("unexpected"), retryable=True, details=str(e))
