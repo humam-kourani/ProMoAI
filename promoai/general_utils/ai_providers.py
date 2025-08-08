@@ -10,12 +10,12 @@ class AIProviders(Enum):
     MISTRAL_AI = "Mistral AI"
 
 AI_MODEL_DEFAULTS = {
-        AIProviders.GOOGLE.value: 'gemini-2.5-pro-exp-03-25',
-        AIProviders.OPENAI.value: 'gpt-4.1',
+        AIProviders.GOOGLE.value: 'gemini-2.5-pro',
+        AIProviders.OPENAI.value: 'gpt-5-mini',
         AIProviders.DEEPSEEK.value: 'deepseek-reasoner',
-        AIProviders.ANTHROPIC.value: 'claude-3-7-sonnet-latest',
-        AIProviders.DEEPINFRA.value: 'meta-llama/Llama-3.2-90B-Vision-Instruct',
-        AIProviders.MISTRAL_AI.value: 'mistral-large-latest'
+        AIProviders.ANTHROPIC.value: 'claude-4-sonnet-latest',
+        AIProviders.DEEPINFRA.value: 'openai/gpt-oss-20b',
+        AIProviders.MISTRAL_AI.value: 'mistral-medium-latest'
     }
 
 DEFAULT_AI_PROVIDER = AIProviders.GOOGLE.value
