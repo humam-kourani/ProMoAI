@@ -135,6 +135,8 @@ def query_llm(
     llm_name: str,
     ai_provider: str,
 ) -> str:
+    print(conversation)
+
     if ai_provider == AIProviders.GOOGLE.value:
         return generate_response_with_history_google(conversation, api_key, llm_name)
     elif ai_provider == AIProviders.ANTHROPIC.value:
@@ -169,60 +171,43 @@ def query_llm(
 
 
 def generate_result_with_error_handling(
-    conversation: List[dict[str, str]],
+    conversation: List[dict[str:str]],
     extraction_function: Callable[[str, Any], T],
     api_key: str,
     llm_name: str,
     ai_provider: str,
-    max_iterations: int = 5,
-    additional_iterations: int = 5,
-    standard_error_message: str = ERROR_MESSAGE_FOR_MODEL_GENERATION,
-) -> Tuple[str, Any, List[Any]]:
-    """
-    Runs an LLM call then tries to parse/execute with `extraction_function`.
-    On failures, feeds the error back into the conversation and retries.
-    Only user-safe messages are ever raised to the caller/frontend.
-    """
-    error_history: list[str] = []
-    total_iters = max_iterations + additional_iterations
-
-    for iteration in range(total_iters):
+    max_iterations=5,
+    additional_iterations=5,
+    standard_error_message=ERROR_MESSAGE_FOR_MODEL_GENERATION,
+) -> tuple[str, any, list[Any]]:
+    error_history = []
+    for iteration in range(max_iterations + additional_iterations):
         response = query_llm(conversation, api_key, llm_name, ai_provider)
         try:
             conversation.append({"role": "assistant", "content": response})
             auto_duplicate = iteration >= max_iterations
             code, result = extraction_function(response, auto_duplicate)
-            return code, result, conversation
-        except BaseLLMError as e:
-            error_history.append(e.user_message)
-            if constants.ENABLE_PRINTS:
-                print(f"Error detected in iteration {iteration + 1}: {e.user_message}")
-            if not e.retryable:
-                raise e
-            new_message = (
-                "Executing your code led to an error. "
-                f"{standard_error_message} "
-                f"This is the error message: {e.user_message}"
-            )
-            conversation.append({"role": "user", "content": new_message})
+            return code, result, conversation  # Break loop if execution is successful
         except Exception as e:
-            safe = _user_message("unexpected")
-            error_history.append(safe)
-            logger.exception("Unexpected parsing/extraction error: %s", _redact(str(e)))
+            error_description = str(e)
+            error_history.append(error_description)
             if constants.ENABLE_PRINTS:
-                print(f"Error detected in iteration {iteration + 1}: {safe}")
+                print("Error detected in iteration " + str(iteration + 1))
             new_message = (
-                "Executing your code led to an error. "
-                f"{standard_error_message} "
-                f"This is the error message: {safe}"
+                f"Executing your code led to an error! "
+                + standard_error_message
+                + "This is the error"
+                f" message: {error_description}"
             )
             conversation.append({"role": "user", "content": new_message})
 
-    fail_msg = (
-        f"{llm_name} couldn't fix the errors after {total_iters} attempts. "
-        "Please try again later."
+    raise Exception(
+        llm_name
+        + " failed to fix the errors after "
+        + str(max_iterations + 5)
+        + " iterations! This is the error history: "
+        + str(error_history)
     )
-    raise ServiceUnavailableError(fail_msg, retryable=True)
 
 
 def print_conversation(conversation):
