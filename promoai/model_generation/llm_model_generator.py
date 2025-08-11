@@ -1,6 +1,7 @@
 import pm4py
 from pm4py.objects.powl.obj import POWL
 from pm4py.util import constants
+from pm4py.objects.bpmn.layout import layouter as bpmn_layouter
 
 from promoai.model_generation import code_extraction
 from promoai.model_generation.model_generation import generate_model
@@ -91,9 +92,9 @@ class LLMProcessModelGenerator:
             )
         bpmn_model = self.get_bpmn()
         from pm4py.objects.bpmn.exporter import exporter
+        bpmn_model = bpmn_layouter.apply(bpmn_model)
 
         exporter.apply(bpmn_model, file_path, parameters={"encoding": encoding})
-        pm4py.write_bpmn()
 
     def export_petri_net(
         self, file_path: str, encoding: str = constants.DEFAULT_ENCODING
