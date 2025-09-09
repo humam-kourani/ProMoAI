@@ -72,6 +72,34 @@ e1_2 = (
     " instead of creating the loop 'loop_back'. 'Going back' indicates the whole process should be repeatable."
 )
 
+d1_3 = (
+    "in this process, you can either do 'a' or 'b'. If 'a' is selected,"
+    " then it can be repeated. After completing 'a' or 'b', 'c' is executed, followed by 'd'."
+)
+
+
+def m1_2():
+    gen = ModelGenerator()
+    a = gen.activity("a")
+    b = gen.activity("b")
+    a_loop = gen.loop(do=a, redo=None)
+    choice_1 = gen.xor(a_loop, b)
+    c = gen.activity("c")
+    d = gen.activity("d")
+    final_model = gen.decision_graph(dependencies=[
+        (choice_1, c)
+        (b, c),
+        (c,d)
+
+    ])
+    return final_model
+
+
+e1_2 = (
+    "A common error here would be to model c and d separately as individual partial order."
+    "Even though this is indeed correct, such behaviour can be expressed using decision graphs."
+)
+
 d2 = (
     "inventory management can proceed through restocking items or fulfilling orders. Restocking can be performed as "
     "often as necessary. Following either restocking or order fulfillment, an inventory audit is carried out. If"
@@ -342,6 +370,87 @@ e7 = (
     " remain independent in the correct partial order."
 )
 
+d8 = (
+    "A followed by B or C. Then D or G."
+)
+def m8():
+    gen = ModelGenerator()
+
+    a = gen.activity("A")
+    b = gen.activity("B")
+    c = gen.activity("C")
+    d = gen.activity("D")
+    g = gen.activity("G")
+    final_model = gen.decision_graph(dependencies=[(a, b), (a, c), (b, d), (b, g), (c, g), (c, d)])
+    return final_model
+
+e8 = (
+    "A common error for this process is to include useless partial order structures instead of using one decision graph to model the whole behavior."
+    " Note that partial orders can be embedded in decision graphs, but decision graphs cannot be embedded in partial orders."
+)
+d9 = (
+    "The process starts with checking part stock availability.",
+    "After that, we either cancel the order because we don't have the required parts to produce it,"
+    "or we continue with the production. When we cancel the order, we notify the customer via e-mail."
+    "If we can produce the machines, we check the production schedule and "
+    "we schedule the production of each machine. In the end, we produce the machines." \
+    "As soon as the machines are produced, we ship the machines. In the end, we notify the customer via e-mail or via the system."
+)
+
+
+def m9():
+    gen = ModelGenerator()
+
+    def __generate_production_block():
+        check_part = gen.activity("Check production schedule")
+        schedule_part = gen.activity("Schedule production")
+        prod_part = gen.activity("Produce machines")
+        ship_part = gen.activity("Ship machines")
+        return gen.partial_order(dependencies=[(check_part, schedule_part), (schedule_part, prod_part), (prod_part, ship_part)])
+    
+    def __cancel_order():
+        return gen.activity("Cancel order")
+    
+    def __notify_email():
+        return gen.activity("Notify via email")
+
+    def __notify_system():
+        return gen.activity("Notify via system")
+
+    def __check_stock():
+        return gen.activity("Check part stock availability")
+    
+    # Build first the decision_graph
+    p1 = __cancel_order()
+    p2 = __generate_production_block()
+    p3 = __notify_email()
+    p4 = __notify_system()
+
+    decision_graph = gen.decision_graph(
+        dependencies = [
+            (p1, p3),
+            (p2, p3),
+            (p2, p4)
+        ]
+    )
+    # Now the po part
+    p0 = __check_stock()
+    final_model = gen.partial_order(
+        dependencies = [
+            (p0, decision_graph)
+        ]
+    )
+
+    return final_model
+
+e9 = (
+    "A common mistake here is to model the decision graph as partial orders of exclusive choices."
+    "The sub-model containing the decision graph, i.e., the activities for production, cancelling the order, and the notifications"
+    "Is a decision graph, as only one of these paths can be executed in the end: either we start with the production, and then choose between one of the two notificaiton methods, or we cancel the order and notify the customer via e-mail."
+    "If we model the decision graph as a partial order of exclusive choices, we lose precision, i.e., the model will allow for more than the described behaviour."
+)
+
+
 # d7 = "An employee purchases a product or service he requires. For instance , a sales person on a trip rents a car. " \
 #      "The employee submits an expense report with a list of items , along with the receipts for each item. A " \
 #      "supervisor reviews the expense report and approves or rejects the report. Since the company has expense rules , " \
@@ -407,6 +516,8 @@ SHOTS = [
     (d5, m5, e5),
     (d6, m6, e6),
     (d7, m7, e7),
+    (d8, m8, e8),
+    (d9, m9, e9)
 ]
 
 if __name__ == "__main__":

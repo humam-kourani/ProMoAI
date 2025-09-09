@@ -1,5 +1,5 @@
 import pm4py
-from pm4py.objects.powl.obj import POWL
+from powl.objects.obj import POWL
 from pm4py.util import constants
 from pm4py.objects.bpmn.layout import layouter as bpmn_layouter
 

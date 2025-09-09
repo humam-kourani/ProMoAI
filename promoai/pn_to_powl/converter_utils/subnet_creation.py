@@ -2,7 +2,7 @@ from typing import Set, Union
 
 from pm4py.objects.petri_net.obj import PetriNet
 from pm4py.objects.petri_net.utils import petri_utils as pn_util
-from pm4py.objects.powl.obj import SilentTransition, Transition
+from powl.objects.obj import SilentTransition, Transition
 
 
 def id_generator():

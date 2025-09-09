@@ -396,8 +396,70 @@ e7 = (
     " are concurrent. This conclusion is not justified and 'B' and 'C' can remain concurrent in the partial order."
 )
 
+d8 = (
+    "The process starts with checking part stock availability.",
+    "After that, we either cancel the order because we don't have the required parts to produce it,"
+    "or we continue with the production. When we cancel the order, we notify the customer via e-mail."
+    "If we can produce the machines, we check the production schedule and "
+    "we schedule the production of each machine. In the end, we produce the machines." \
+    "As soon as the machines are produced, we ship the machines. In the end, we notify the customer via e-mail or via the system."
+)
 
-SHOTS_TOP_DOWN = [(d1, m1, e1), (d1_2, m1_2, e1_2), (d6, m6, e6), (d7, m7, e7)]
+
+def m8():
+    gen = ModelGenerator()
+
+    def __generate_production_block():
+        check_part = gen.activity("Check production schedule")
+        schedule_part = gen.activity("Schedule production")
+        prod_part = gen.activity("Produce machines")
+        ship_part = gen.activity("Ship machines")
+        return gen.partial_order(dependencies=[(check_part, schedule_part), (schedule_part, prod_part), (prod_part, ship_part)])
+    
+    def __cancel_order():
+        return gen.activity("Cancel order")
+    
+    def __notify_email():
+        return gen.activity("Notify via email")
+
+    def __notify_system():
+        return gen.activity("Notify via system")
+
+    def __check_stock():
+        return gen.activity("Check part stock availability")
+    
+    # Build first the decision_graph
+    p1 = __cancel_order()
+    p2 = __generate_production_block()
+    p3 = __notify_email()
+    p4 = __notify_system()
+
+    decision_graph = gen.decision_graph(
+        dependencies = [
+            (p1, p3),
+            (p2, p3),
+            (p2, p4)
+        ]
+    )
+    # Now the po part
+    p0 = __check_stock()
+    final_model = gen.partial_order(
+        dependencies = [
+            (p0, decision_graph)
+        ]
+    )
+
+    return final_model
+
+e8 = (
+    "A common mistake here is to model the decision graph as partial orders of exclusive choices."
+    "The sub-model containing the decision graph, i.e., the activities for production, cancelling the order, and the notifications"
+    "Is a decision graph, as only one of these paths can be executed in the end: either we start with the production, and then choose between one of the two notificaiton methods, or we cancel the order and notify the customer via e-mail."
+    "If we model the decision graph as a partial order of exclusive choices, we lose precision, i.e., the model will allow for more than the described behaviour."
+)
+
+
+SHOTS_TOP_DOWN = [(d1, m1, e1), (d1_2, m1_2, e1_2), (d6, m6, e6), (d7, m7, e7), (d8, m8, e8)]
 
 if __name__ == "__main__":
     model = m6()

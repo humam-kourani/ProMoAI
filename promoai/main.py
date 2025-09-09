@@ -1,7 +1,6 @@
-from pm4py import BPMN, convert_to_petri_net, discover_powl, PetriNet
-from pm4py.algo.discovery.powl.inductive.variants.powl_discovery_varaints import (
-    POWLDiscoveryVariant,
-)
+from pm4py import BPMN, convert_to_petri_net, PetriNet
+from powl.main import discover as discover_powl
+from powl.discovery.total_order_based.inductive.variants.powl_discovery_varaints import POWLDiscoveryVariant
 
 from promoai.aipa.bpmn_analyzer import BPMNAnalyzer
 from promoai.model_generation.llm_model_generator import LLMProcessModelGenerator
@@ -16,8 +15,8 @@ def generate_model_from_text(
     )
 
 
-def generate_model_from_event_log(event_log):
-    powl_model = discover_powl(event_log, variant=POWLDiscoveryVariant.MAXIMAL)
+def generate_model_from_event_log(event_log, threshold = 0.0):
+    powl_model = discover_powl(event_log, dfg_frequency_filtering_threshold=threshold, variant=POWLDiscoveryVariant.MAXIMAL)
     return LLMProcessModelGenerator.from_powl(powl_model=powl_model)
 
 

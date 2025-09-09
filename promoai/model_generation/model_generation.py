@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from pm4py.objects.powl.obj import POWL
+from powl.objects.obj import POWL
 
 from promoai.general_utils.llm_connection import generate_result_with_error_handling
 from promoai.model_generation.code_extraction import (

@@ -1,8 +1,9 @@
-from pm4py.objects.powl.obj import (
+from powl.objects.obj import (
     OperatorPOWL,
     SilentTransition,
     StrictPartialOrder,
     Transition,
+    DecisionGraph
 )
 from pm4py.objects.process_tree.obj import Operator
 
@@ -60,7 +61,7 @@ def translate_powl_to_code(powl_obj):
                 raise Exception("Unknown operator! This should not be possible!")
             return var_name
 
-        elif isinstance(powl, StrictPartialOrder):
+        elif isinstance(powl, StrictPartialOrder) or isinstance(powl, DecisionGraph):
             nodes = powl.get_children()
             order = powl.order.get_transitive_reduction()
             node_var_map = {node: process_powl(node) for node in nodes}
@@ -68,6 +69,11 @@ def translate_powl_to_code(powl_obj):
             nodes_in_edges = set()
             for source in nodes:
                 for target in nodes:
+                    # Check if it has attribute start and end
+                    if hasattr(powl, 'start') and hasattr(powl, 'end'):
+                        if source == powl.start or target == powl.end:
+                            # Artificially added, so we skip them
+                            continue
                     source_var = node_var_map[source]
                     target_var = node_var_map[target]
                     if order.is_edge(source, target):
@@ -84,6 +90,7 @@ def translate_powl_to_code(powl_obj):
             var_name = get_new_var_name()
             code_lines.append(
                 f"{var_name} = gen.partial_order(dependencies=[{dep_str}])"
+            ) if dependencies else code_lines.append(f"{var_name} = gen.decision_graph(dependencies=[{dep_str}])"
             )
             return var_name
 

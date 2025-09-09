@@ -5,7 +5,9 @@ import tempfile
 
 import promoai
 import streamlit as st
-from pm4py import convert_to_bpmn, convert_to_petri_net, read_bpmn, read_pnml, read_xes
+from pm4py import read_bpmn, read_pnml, read_xes
+from powl.conversion.variants.to_bpmn import apply as convert_to_bpmn
+
 from pm4py.objects.bpmn.exporter.variants.etree import get_xml_string
 from pm4py.objects.bpmn.layout import layouter as bpmn_layouter
 from pm4py.objects.petri_net.exporter.variants.pnml import export_petri_as_string
@@ -125,6 +127,15 @@ def run_app():
                 type=["xes", "gz"],
                 help=DISCOVERY_HELP,
             )
+
+            threshold = st.number_input(
+                label="Noise Filtering Threshold (0.0 = No Filtering)",
+                min_value=0.0,
+                max_value=1.0,
+                value=0.0,
+                step=0.01,
+            )
+
             submit_button = st.form_submit_button(label="Run")
             if submit_button:
                 if uploaded_log is None:
@@ -140,7 +151,7 @@ def run_app():
                         log = read_xes(temp_file.name, variant="rustxes")
                     shutil.rmtree(temp_dir, ignore_errors=True)
 
-                    process_model = promoai.generate_model_from_event_log(log)
+                    process_model = promoai.generate_model_from_event_log(log, threshold)
 
                     st.session_state["model_gen"] = process_model
                     st.session_state["feedback"] = []
@@ -241,10 +252,8 @@ def run_app():
                 st.write("Export Model")
                 process_model_obj = st.session_state["model_gen"]
                 powl = process_model_obj.get_powl()
-                pn, im, fm = convert_to_petri_net(powl)
-                bpmn = convert_to_bpmn(pn, im, fm)
+                bpmn = convert_to_bpmn(powl)[0]
                 bpmn = bpmn_layouter.apply(bpmn)
-
                 download_1, download_2 = st.columns(2)
                 with download_1:
                     bpmn_data = get_xml_string(
@@ -258,6 +267,8 @@ def run_app():
                     )
 
                 with download_2:
+                    from powl.conversion.variants.to_petri_net import apply as convert_to_petri_net
+                    pn, im, fm = convert_to_petri_net(powl)
                     pn_data = export_petri_as_string(pn, im, fm)
                     st.download_button(
                         label="Download PNML",
@@ -272,9 +283,9 @@ def run_app():
 
             image_format = str("svg").lower()
             if view_option == ViewType.POWL.value:
-                from pm4py.visualization.powl import visualizer
+                from powl.visualization.powl import visualizer
 
-                vis_str = visualizer.apply(powl, parameters={"format": image_format})
+                vis_str = visualizer.apply(powl)
 
             elif view_option == ViewType.PETRI.value:
                 visualization = pn_visualizer.apply(

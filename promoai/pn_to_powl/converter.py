@@ -1,6 +1,6 @@
 from pm4py import PetriNet
-from pm4py.objects.powl.BinaryRelation import BinaryRelation
-from pm4py.objects.powl.obj import Operator, OperatorPOWL, POWL, StrictPartialOrder
+from powl.objects.BinaryRelation import BinaryRelation
+from powl.objects.obj import Operator, OperatorPOWL, POWL, StrictPartialOrder
 
 from promoai.pn_to_powl.converter_utils.cut_detection import (
     mine_base_case,
