@@ -34,22 +34,6 @@ def run_app():
 
     temp_dir = "temp"
 
-    system_dot = shutil.which("dot")
-    if system_dot:
-        print(f"Found system-wide 'dot' at: {system_dot}")
-    else:
-        base_path = "/home/adminuser/.conda"
-        possible_subpaths = ["bin"]
-
-        for sub in possible_subpaths:
-            candidate = os.path.join(base_path, sub, "dot")
-            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-                print(f"Found 'dot' at: {candidate}")
-                os.environ["PATH"] += os.pathsep + os.path.dirname(candidate)
-                break
-        else:
-            st.error(body="Couldn't find 'dot' — is Graphviz installed?", icon="⚠️")
-
     if "provider" not in st.session_state:
         st.session_state["provider"] = DEFAULT_AI_PROVIDER
 

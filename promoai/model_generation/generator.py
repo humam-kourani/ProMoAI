@@ -121,17 +121,6 @@ class ModelGenerator:
                         " while it is"
                         " INCORRECT to have 'partial_order > partial_order' in the hierarchy.'"
                     )
-        if self.nested_decision_graphs:
-            pass
-        else:
-            for child in children:
-                if isinstance(child, DecisionGraph):
-                    raise Exception(
-                        "Do not use decision graphs as 'direct children' of partial orders."
-                        " Instead, combine dependencies at the same hierarchical level. Note that it is"
-                        " INCORRECT to have 'partial_order > decision_graph' in the hierarchy.'"
-                    )
-
         order = StrictPartialOrder(list(children.values()))
         for dep in dependencies:
             if isinstance(dep, tuple):
@@ -150,7 +139,7 @@ class ModelGenerator:
                 if len(dep) != 2:
                     raise Exception("Invalid dependency tuple in decision graph! Each tuple must contain exactly 2 elements.")
                 for n in dep:
-                    if n not in list_children:
+                    if n not in list_children and n is not None:
                         list_children.append(n)
             elif isinstance(dep, POWL):
                 if dep not in list_children:
@@ -160,35 +149,53 @@ class ModelGenerator:
                     "Invalid dependencies for the decision graph! You should provide a list that contains"
                     " tuples of POWL models!"
                 )
-        if len(list_children) <= 2:
+        if len(list_children) < 1:
             raise Exception("" \
-            "A decision graph has at least a start and an end. The provided list has at least 2 elements."
+            "A decision graph has at least one node. The provided list should comprise of at least one element."
             )
+        elif len(list_children) == 1:
+            # Check if it is skippable
+            if set(dependencies) != set([(None, list_children[0]), (list_children[0], None), (None, None)]):
+                raise Exception(
+                    "A decision graph with a single node must be skippable, i.e., it must have dependencies [(None, A), (A, None), (None, None)]"
+                )
+                
         children = dict()
         for child in list_children:
             new_child = self.create_model(child)
             children[child] = new_child
         # Identify start and end nodes first
         # Default dict with values 0
-        incoming = defaultdict(lambda: 0)
-        outgoing = defaultdict(lambda: 0)
-
+        start_nodes, end_nodes = [], []
+        empty_path = False
 
         for dep in dependencies:
             if isinstance(dep, tuple):
                 # Add both of them there
-                outgoing[dep[0]] = outgoing.get(dep[0], 0) + 1
-                incoming[dep[1]] = incoming.get(dep[1], 0) + 1
-        start_nodes, end_nodes = [], []
+                if len(dep) != 2:
+                    raise Exception("Invalid dependency tuple in decision graph! Each tuple must contain exactly 2 elements. " \
+                    "Note that None can be used to indicate start or end.")
+                source = dep[0]
+                target = dep[1]
+                if source is None and target is None:
+                    empty_path = True
+                elif source is None: 
+                    start_nodes.append(children[target])
+                elif target is None:
+                    end_nodes.append(children[source])
+            
+
         # Build a graph to check for edges
         G = nx.DiGraph()
-        for child in children.keys():
-            out_ = outgoing[child]
-            in_ = incoming[child]
-            if in_ == 0:
-                start_nodes.append(child)
-            if out_ == 0:
-                end_nodes.append(child)
+        # Add artificial start and end nodes
+        G.add_node("ArtificialStart")
+        G.add_node("ArtificialEnd")
+        for sn in start_nodes:
+            G.add_edge("ArtificialStart", sn)
+        for en in end_nodes:
+            G.add_edge(en, "ArtificialEnd")
+        if empty_path:
+            G.add_edge("ArtificialStart", "ArtificialEnd")
         # We have everything needed to create the decision graph
         binary_relation = BinaryRelation(list_children)
         for dep in dependencies:
@@ -198,14 +205,15 @@ class ModelGenerator:
                     target = dep[i + 1]
                     if source in children.keys() and target in children.keys():
                         G.add_edge(source, target)
-                        # Check for cycles
-                        try:
-                            nx.find_cycle(G, orientation='original')
-                            raise Exception("Cycle detected in decision graph!")
-                        except nx.exception.NetworkXNoCycle:
-                            pass
                         binary_relation.add_edge(children[source], children[target])
-        order = DecisionGraph(binary_relation, start_nodes, end_nodes)
+        # Check if all nodes are from start to end
+        for node in list_children:
+            if node not in start_nodes and node not in end_nodes:
+                if not (nx.has_path(G, "ArtificialStart", node) and nx.has_path(G, node, "ArtificialEnd")):
+                    raise Exception(
+                        f"All nodes in a decision graph must be on a path from a start node to an end node, {children[node]} isn't!"
+                    )
+        order = DecisionGraph(binary_relation, start_nodes, end_nodes, empty_path=empty_path)
         children = order.children
         if self.nested_decision_graphs:
             pass
@@ -215,17 +223,7 @@ class ModelGenerator:
                     raise Exception(
                         "Do not use decision graphs as 'direct children' of other decision graphs."
                         " Instead, combine dependencies at the same hierarchical level in the same structure. Note that it is"
-                        " CORRECT to have 'decision_graph > xor/loop > decision_graph in the hierarchy"
-                    )
-        if self.nested_partial_orders:
-            pass
-        else:
-            for child in children:
-                if isinstance(child, StrictPartialOrder):
-                    raise Exception(
-                        "Do not use partial orders as 'direct children' of decision graphs."
-                        " Instead, combine dependencies at the same hierarchical level in the same structure by"
-                        " integrating the partial order in the decision graph as additional dependencies in the decision graph."
+                        " CORRECT to have 'decision_graph > xor/loop/partial_order > decision_graph in the hierarchy"
                     )
         return order.simplify()
 

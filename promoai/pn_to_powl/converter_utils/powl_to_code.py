@@ -62,7 +62,7 @@ def translate_powl_to_code(powl_obj):
             return var_name
 
         elif isinstance(powl, StrictPartialOrder) or isinstance(powl, DecisionGraph):
-            nodes = powl.get_children()
+            nodes = powl.get_children() if isinstance(powl, StrictPartialOrder) else powl.children
             order = powl.order.get_transitive_reduction()
             node_var_map = {node: process_powl(node) for node in nodes}
             dependencies = []

@@ -16,7 +16,7 @@ def generate_model_from_text(
 
 
 def generate_model_from_event_log(event_log, threshold = 0.0):
-    powl_model = discover_powl(event_log, dfg_frequency_filtering_threshold=threshold, variant=POWLDiscoveryVariant.MAXIMAL)
+    powl_model = discover_powl(event_log, dfg_frequency_filtering_threshold=threshold)
     return LLMProcessModelGenerator.from_powl(powl_model=powl_model)
 
 

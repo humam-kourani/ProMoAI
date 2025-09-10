@@ -25,23 +25,27 @@ def m1():
     a = gen.activity("a")
     b = gen.activity("b")
     a_loop = gen.loop(do=a, redo=None)
-    choice_1 = gen.xor(a_loop, b)
     c = gen.activity("c")
     d = gen.activity("d")
-    poset_c_d = gen.partial_order(dependencies=[(c, d)])
-    skippable_c_d = gen.xor(poset_c_d, None)
     a_copy = a.copy()
-    poset_1 = gen.partial_order(
-        dependencies=[(choice_1, skippable_c_d), (skippable_c_d, a_copy)]
-    )
-    skippable_1 = gen.xor(poset_1, None)
-    final_model = skippable_1
-    return final_model
+    model = gen.decision_graph(dependencies=[
+        (None, a_loop),
+        (None, b),
+        (a_loop, c),
+        (b, c),
+        (b, None),
+        (a_loop, None),
+        (c, d),
+        (d, a_copy),
+        (a_copy, None),
+        (None, None)
+    ])
+    return model
 
 
 e1 = (
     "a common error for this process is to add a sequential dependency 'd -> a' without creating a"
-    " copy of 'a'. This would violate the reflexivity of the partial order."
+    " copy of 'a'. This would imply that the whole process can be executed once again, which is not stated in the description."
 )
 
 d1_2 = (
@@ -56,20 +60,23 @@ def m1_2():
     a = gen.activity("a")
     b = gen.activity("b")
     a_loop = gen.loop(do=a, redo=None)
-    choice_1 = gen.xor(a_loop, b)
     c = gen.activity("c")
     d = gen.activity("d")
-    poset_c_d = gen.partial_order(dependencies=[(c, d)])
-    skippable_c_d = gen.xor(poset_c_d, None)
-    poset_1 = gen.partial_order(dependencies=[(choice_1, skippable_c_d)])
-    loop_back = gen.loop(do=poset_1, redo=None)
-    final_model = loop_back
+    final_model = gen.decision_graph(dependencies=[
+        (None, a_loop),
+        (None, b),
+        (a_loop, c),
+        (b, c),
+        (c, d),
+        (d, a_loop),
+        (d, None)
+    ])
     return final_model
 
 
 e1_2 = (
     "a common error for this process is to add a sequential dependency 'd -> a' or 'd -> a.copy()'"
-    " instead of creating the loop 'loop_back'. 'Going back' indicates the whole process should be repeatable."
+    " instead of creating a sequential dependency (d, a_loop)."
 )
 
 d1_3 = (
@@ -83,21 +90,22 @@ def m1_2():
     a = gen.activity("a")
     b = gen.activity("b")
     a_loop = gen.loop(do=a, redo=None)
-    choice_1 = gen.xor(a_loop, b)
     c = gen.activity("c")
     d = gen.activity("d")
     final_model = gen.decision_graph(dependencies=[
-        (choice_1, c)
+        (None, a_loop),
+        (None, b),
+        (a_loop, c),
         (b, c),
-        (c,d)
-
+        (c, d),
+        (d, None)
     ])
     return final_model
 
 
 e1_2 = (
-    "A common error here would be to model c and d separately as individual partial order."
-    "Even though this is indeed correct, such behaviour can be expressed using decision graphs."
+    "A common mistake here would be to break the process into separable parts, e.g., partial order expressing (c,d)."
+    "This is not necessary, as decision graphs can express simple sequential dependencies."
 )
 
 d2 = (
@@ -115,24 +123,27 @@ def m2():
     restock = gen.activity("restock items")
     loop_1 = gen.loop(do=restock, redo=None)
     fulfil = gen.activity("fulfill orders")
-    choice_1 = gen.xor(loop_1, fulfil)
     urgent_restock = gen.activity("urgent restock")
-    choice_2 = gen.xor(choice_1, urgent_restock)
     inventory_audit = gen.activity("inventory audit")
     data_analysis = gen.activity("data analysis")
-    optional_data_analysis = gen.xor(data_analysis, None)
-    poset_1 = gen.partial_order(
-        dependencies=[
-            (choice_2, inventory_audit),
-            (inventory_audit, optional_data_analysis),
-        ]
-    )
-    final_skip_loop = gen.loop(do=None, redo=poset_1)
-    final_model = final_skip_loop
+    final_model = gen.decision_graph(dependencies=[
+        (None, loop_1),
+        (None, fulfil),
+        (None, urgent_restock),
+        (loop_1, inventory_audit),
+        (fulfil, inventory_audit),
+        (urgent_restock, inventory_audit),
+        (inventory_audit, data_analysis),
+        (inventory_audit, None),
+        (data_analysis, None),
+        (None, None)
+    ])
+    final_model = gen.loop(do=final_model, redo=None)
     return final_model
 
 
-e2 = "a common error for this process is to copy 'inventory_audit'."
+e2 = "a common error for this process is to copy 'inventory_audit'. Another common error is to create a partial order for" \
+" sequential dependencies that can be expressed via the decision graph."
 
 d3 = (
     "This enhanced payroll process allows for a high degree of customization and adaptation to specific "
@@ -149,20 +160,21 @@ def m3():
     activity_2 = gen.activity("calculate pay")
     activity_3 = gen.activity("issue payments")
     activity_4 = gen.activity("generate reports")
-    poset = gen.partial_order(
-        dependencies=[
-            (activity_1_self_loop, activity_2),
-            (activity_2, activity_3),
-            (activity_2, activity_4),
-        ]
-    )
-    final_model = poset
+    partial_order_1 = gen.partial_order(dependencies=[(activity_3, ), (activity_4, )])
+
+    final_model = gen.decision_graph(dependencies=[
+        (None, activity_1_self_loop),
+        (activity_1_self_loop, activity_2),
+        (activity_2, partial_order_1),
+        (partial_order_1, None),
+    ])
     return final_model
 
 
 e3 = (
     "a common error for this process is to model a choice between activity_3 and activity_4 instead of the"
-    " concurrency."
+    " concurrency. Additionally, a common mistake is to integrate the partial order into the decision graph."
+    "This is not possible here, as decision graphs cannot express concurrency."
 )
 
 d4 = (
@@ -180,13 +192,13 @@ def m4():
     # subprocess 1
     a = gen.activity("a")
     b = gen.activity("b")
-    choice_c_d = gen.xor(gen.activity("c"), gen.activity("d"))
+    choice_c_d = gen.decision_graph(dependencies=[(None, gen.activity("c")), (None, gen.activity("d")), (gen.activity("c"), None), (gen.activity("d"), None)])
 
     # subprocess 2
     unskippable_self_loop_e = gen.loop(do=gen.activity("e"), redo=None)
 
     # subprocess 3
-    skippable_self_loop_f = gen.loop(do=None, redo=gen.activity("f"))
+    skippable_self_loop_f = gen.decision_graph(dependencies=[(None, gen.activity("f")), (gen.activity("f"), None), (None, None)])
 
     # subprocess 4
     g = gen.activity("g")
@@ -211,7 +223,8 @@ def m4():
 
 e4 = (
     "a common error for this process is to create partial orders for some subprocesses, then trying to add a"
-    " partial order as a child of another partial order."
+    " partial order as a child of another partial order. Note that the behavior cannot be expressed with one decision graph"
+    " because decision graphs cannot express concurrency."
 )
 
 d5 = (
@@ -233,40 +246,35 @@ def m5():
     repair_software = gen.activity("Check and configure the software")
     test_functionality_after_hardware_repair = gen.activity("Test system functionality")
     test_functionality_after_software_repair = gen.activity("Test system functionality")
-    additional_hardware_repair = gen.xor(
-        gen.activity("Perform additional hardware repairs"), None
-    )
-    additional_software_repair = gen.xor(
-        gen.activity("Perform additional software repairs"), None
-    )
+    additional_hardware_repair = gen.activity("Perform additional hardware repairs")
+    additional_software_repair = gen.activity("Perform additional software repairs")
     finish_repair = gen.activity("Finish repair")
-
-    hardware_repair_order_dependencies = [
-        (repair_hardware, test_functionality_after_hardware_repair),
-        (test_functionality_after_hardware_repair, additional_hardware_repair),
-    ]
-
-    software_repair_order_dependencies = [
-        (repair_software, test_functionality_after_software_repair),
-        (test_functionality_after_software_repair, additional_software_repair),
-    ]
-
-    poset_full_repair = gen.partial_order(
-        dependencies=hardware_repair_order_dependencies
-        + software_repair_order_dependencies
-        + [
-            (additional_software_repair, finish_repair),
-            (additional_hardware_repair, finish_repair),
-        ]
+    skippable_repair_after_hardware_repair = gen.decision_graph(dependencies=[
+        (None, additional_hardware_repair),
+        (test_functionality_after_hardware_repair, None),
+        (None, None)
+    ])
+    skippable_repair_after_software_repair = gen.decision_graph(dependencies=[
+        (None, additional_software_repair),
+        (test_functionality_after_software_repair, None),
+        (None, None)
+    ])
+    partial_order_repairs = gen.partial_order(
+        dependencies=[(repair_hardware, test_functionality_after_hardware_repair), (repair_software, test_functionality_after_software_repair),
+                      (test_functionality_after_hardware_repair, skippable_repair_after_hardware_repair),
+                      (test_functionality_after_software_repair, skippable_repair_after_software_repair)]
     )
+    final_model = gen.decision_graph(dependencies=[
+        (None, defect_check),
+        (defect_check, cost_calculation),
+        (cost_calculation, cancel),
+        (cancel, None),
+        (cost_calculation, partial_order_repairs),
+        (partial_order_repairs, finish_repair),
+        (finish_repair, None),
+        (None, None)
+    ])
 
-    # choice between canceling or starting the repair process
-    choice = gen.xor(cancel, poset_full_repair)
-
-    # final model
-    final_model = gen.partial_order(
-        dependencies=[(defect_check, cost_calculation), (cost_calculation, choice)]
-    )
 
     return final_model
 
@@ -275,7 +283,7 @@ e5 = (
     "a common error for this process is to create partial orders for some subprocesses, then trying to add a"
     " partial order as a child of another partial order. Another very important error you should avoid is to"
     " create a local choice between 'cancel' and some local activity (e.g., 'continue process') instead of"
-    " modeling a choice between 'cancel' and the rest of the process."
+    " modeling a choice between 'cancel' and the rest of the process. Additionally, a common mistake is to integrate the partial order into the decision graph."
 )
 
 d6 = (
@@ -307,43 +315,40 @@ def m6():
     ship_bicycle = gen.activity("Ship bicycle")
     finish_process = gen.activity("Finish process instance")
 
-    check_reserve = gen.xor(reserve, back_order)
-
-    single_part = gen.partial_order(dependencies=[(check_part, check_reserve)])
-    part_loop = gen.loop(do=single_part, redo=None)
-
-    accept_poset = gen.partial_order(
-        dependencies=[
-            (accept_order, inform),
-            (inform, process_part_list),
-            (inform, prepare_assembly),
-            (process_part_list, part_loop),
-            (part_loop, assemble_bicycle),
-            (prepare_assembly, assemble_bicycle),
-            (assemble_bicycle, ship_bicycle),
-        ]
+    part_subprocess = gen.decision_graph(dependencies=[
+        (None, check_part),
+        (check_part, reserve),
+        (check_part, back_order),
+        (reserve, None),
+        (back_order, None),
+        (None, None)
+    ])
+    # Done per part in the part list
+    part_subprocess = gen.loop(do=part_subprocess, redo=None)
+    concurrency = gen.partial_order(dependencies =
+        [(part_subprocess,), (prepare_assembly,)]
     )
 
-    choice_accept_reject = gen.xor(accept_poset, reject_order)
-
-    final_model = gen.partial_order(
-        dependencies=[
-            (create_process, choice_accept_reject),
-            (choice_accept_reject, finish_process),
-        ]
-    )
+    final_model = gen.decision_graph(dependencies=[
+        (None, create_process),
+        (create_process, reject_order),
+        (create_process, accept_order),
+        (reject_order, finish_process),
+        (accept_order, inform),
+        (inform, process_part_list),
+        (process_part_list, concurrency),
+        (concurrency, assemble_bicycle),
+        (assemble_bicycle, ship_bicycle),
+        (ship_bicycle, finish_process),
+        (finish_process, None),
+    ])
 
     return final_model
 
 
 e6 = (
-    "a common error for this process is to"
-    " create a local choice between 'reject_order' and 'accept_order' instead of"
-    " modeling a choice between 'reject_order' and the complete complex subprocess that is executed in case"
-    " the order is accepted ('accept_poset'). Although"
-    " the text says there is a choice between accepting or rejecting the order, you should derive from your"
-    " understanding of the context that this choice also includes all activities that are executed after accepting"
-    " an order."
+    "a common error is not to create a partial order for the concurrency between the part handling subprocess and the preparation of the assembly."
+    " Additionally, a common mistake is to integrate the partial order into the decision graph."
 )
 
 d7 = (
@@ -371,7 +376,7 @@ e7 = (
 )
 
 d8 = (
-    "A followed by B or C. Then D or G."
+    "A followed by B or C. Then D or G. A can be followed by G. Optionally, after A, we can skip all other activities."
 )
 def m8():
     gen = ModelGenerator()
@@ -381,7 +386,7 @@ def m8():
     c = gen.activity("C")
     d = gen.activity("D")
     g = gen.activity("G")
-    final_model = gen.decision_graph(dependencies=[(a, b), (a, c), (b, d), (b, g), (c, g), (c, d)])
+    final_model = gen.decision_graph(dependencies=[(None ,a), (a, b), (a, g), (a, c), (b, d), (b, g), (c, g), (c, d), (d, None), (g, None), (a, None)])
     return final_model
 
 e8 = (
