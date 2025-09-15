@@ -131,7 +131,9 @@ class ModelGenerator:
                         order.add_edge(children[source], children[target])
 
         res = order
-        return res.simplify()
+        return res
+    
+
     def decision_graph(self, dependencies):
         list_children = []
         for dep in dependencies:
@@ -225,7 +227,7 @@ class ModelGenerator:
                         " Instead, combine dependencies at the same hierarchical level in the same structure. Note that it is"
                         " CORRECT to have 'decision_graph > xor/loop/partial_order > decision_graph in the hierarchy"
                     )
-        return order.simplify()
+        return order
 
 
 

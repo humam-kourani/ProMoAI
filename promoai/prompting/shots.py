@@ -24,27 +24,27 @@ def m1():
     gen = ModelGenerator()
     a = gen.activity("a")
     b = gen.activity("b")
-    a_loop = gen.loop(do=a, redo=None)
     c = gen.activity("c")
     d = gen.activity("d")
     a_copy = a.copy()
     model = gen.decision_graph(dependencies=[
-        (None, a_loop),
+        (None, a),
         (None, b),
-        (a_loop, c),
+        (None, None),
+        (a, a),
+        (a, c),
         (b, c),
-        (b, None),
-        (a_loop, None),
         (c, d),
         (d, a_copy),
         (a_copy, None),
-        (None, None)
+        (a, None),
+        (b, None)
     ])
     return model
 
 
 e1 = (
-    "a common error for this process is to add a sequential dependency 'd -> a' without creating a"
+    "a common error for this process is to add a dependency 'd -> a' without creating a"
     " copy of 'a'. This would imply that the whole process can be executed once again, which is not stated in the description."
 )
 
@@ -59,24 +59,25 @@ def m1_2():
     gen = ModelGenerator()
     a = gen.activity("a")
     b = gen.activity("b")
-    a_loop = gen.loop(do=a, redo=None)
     c = gen.activity("c")
     d = gen.activity("d")
     final_model = gen.decision_graph(dependencies=[
-        (None, a_loop),
+        (None, a),
+        (a, a),
         (None, b),
-        (a_loop, c),
+        (a, c),
         (b, c),
         (c, d),
-        (d, a_loop),
+        (d, a),
         (d, None)
     ])
     return final_model
 
 
 e1_2 = (
-    "a common error for this process is to add a sequential dependency 'd -> a' or 'd -> a.copy()'"
-    " instead of creating a sequential dependency (d, a_loop)."
+    "a common error for this process is to add a dependency 'd -> a.copy()'."
+    " This would imply that the whole process cannot be executed again."
+    " Another common error is to not add a dependency a->a (self-loop)."
 )
 
 d1_3 = (
@@ -89,13 +90,13 @@ def m1_2():
     gen = ModelGenerator()
     a = gen.activity("a")
     b = gen.activity("b")
-    a_loop = gen.loop(do=a, redo=None)
     c = gen.activity("c")
     d = gen.activity("d")
     final_model = gen.decision_graph(dependencies=[
-        (None, a_loop),
+        (None, a),
+        (a, a),
         (None, b),
-        (a_loop, c),
+        (a, c),
         (b, c),
         (c, d),
         (d, None)
@@ -121,16 +122,16 @@ d2 = (
 def m2():
     gen = ModelGenerator()
     restock = gen.activity("restock items")
-    loop_1 = gen.loop(do=restock, redo=None)
     fulfil = gen.activity("fulfill orders")
     urgent_restock = gen.activity("urgent restock")
     inventory_audit = gen.activity("inventory audit")
     data_analysis = gen.activity("data analysis")
     final_model = gen.decision_graph(dependencies=[
-        (None, loop_1),
+        (None, restock),
+        (restock, restock),
         (None, fulfil),
         (None, urgent_restock),
-        (loop_1, inventory_audit),
+        (restock, inventory_audit),
         (fulfil, inventory_audit),
         (urgent_restock, inventory_audit),
         (inventory_audit, data_analysis),
@@ -143,7 +144,7 @@ def m2():
 
 
 e2 = "a common error for this process is to copy 'inventory_audit'. Another common error is to create a partial order for" \
-" sequential dependencies that can be expressed via the decision graph."
+" sequential dependencies that can be expressed via the decision graph. Additionally, a common mistake is to omit the self-loop on 'restock items'."
 
 d3 = (
     "This enhanced payroll process allows for a high degree of customization and adaptation to specific "
@@ -156,15 +157,15 @@ d3 = (
 def m3():
     gen = ModelGenerator()
     track_time = gen.activity("track time")
-    activity_1_self_loop = gen.loop(do=track_time, redo=None)
     activity_2 = gen.activity("calculate pay")
     activity_3 = gen.activity("issue payments")
     activity_4 = gen.activity("generate reports")
     partial_order_1 = gen.partial_order(dependencies=[(activity_3, ), (activity_4, )])
 
     final_model = gen.decision_graph(dependencies=[
-        (None, activity_1_self_loop),
-        (activity_1_self_loop, activity_2),
+        (None, track_time),
+        (track_time, track_time),
+        (track_time, activity_2),
         (activity_2, partial_order_1),
         (partial_order_1, None),
     ])
@@ -195,10 +196,12 @@ def m4():
     choice_c_d = gen.decision_graph(dependencies=[(None, gen.activity("c")), (None, gen.activity("d")), (gen.activity("c"), None), (gen.activity("d"), None)])
 
     # subprocess 2
-    unskippable_self_loop_e = gen.loop(do=gen.activity("e"), redo=None)
+    e = gen.activity("e")
+    unskippable_self_loop_e = gen.decision_graph(dependencies=[(None, e), (e, e), (e, None), (None, None)])
 
     # subprocess 3
-    skippable_self_loop_f = gen.decision_graph(dependencies=[(None, gen.activity("f")), (gen.activity("f"), None), (None, None)])
+    f = gen.activity("f")
+    skippable_self_loop_f = gen.decision_graph(dependencies=[(None, f), (f, None), (None, None)])
 
     # subprocess 4
     g = gen.activity("g")
@@ -324,7 +327,7 @@ def m6():
         (None, None)
     ])
     # Done per part in the part list
-    part_subprocess = gen.loop(do=part_subprocess, redo=None)
+    part_subprocess = gen.decision_graph(dependencies=[(None, part_subprocess), (part_subprocess, None), (part_subprocess, part_subprocess)])
     concurrency = gen.partial_order(dependencies =
         [(part_subprocess,), (prepare_assembly,)]
     )
