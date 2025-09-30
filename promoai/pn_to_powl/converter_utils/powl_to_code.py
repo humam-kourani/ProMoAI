@@ -1,11 +1,15 @@
+from powl.objects.BinaryRelation import BinaryRelation
 from powl.objects.obj import (
     OperatorPOWL,
     SilentTransition,
     StrictPartialOrder,
     Transition,
-    DecisionGraph
+    DecisionGraph,
+    StartNode,
+    EndNode
 )
 from pm4py.objects.process_tree.obj import Operator
+from sympy import false
 
 from promoai.prompting.prompt_engineering import import_statement
 
@@ -39,27 +43,28 @@ def translate_powl_to_code(powl_obj):
                 code_lines.append(f"{var_name} = gen.activity('{label}')")
             return var_name
 
+        elif isinstance(powl, StartNode) or isinstance(powl, EndNode):
+            return None
+
         elif isinstance(powl, OperatorPOWL):
             operator = powl.operator
             children = powl.children
-            child_vars = [process_powl(child) for child in children]
-            var_name = get_new_var_name()
             if operator == Operator.XOR:
-                child_vars_str = ", ".join(child_vars)
-                code_lines.append(f"{var_name} = gen.xor({child_vars_str})")
+                rel = BinaryRelation(children)
+                graph = DecisionGraph(rel, children, children, false)
+                graph = graph.reduce_silent_transitions()
+                return process_powl(graph)
             elif operator == Operator.LOOP:
-                if len(child_vars) != 2:
-                    raise Exception(
-                        "A loop of invalid size! This should not be possible!"
-                    )
-                do_var = child_vars[0]
-                redo_var = child_vars[1]
-                code_lines.append(
-                    f"{var_name} = gen.loop(do={do_var}, redo={redo_var})"
-                )
+                rel = BinaryRelation(children)
+                do = children[0]
+                redo = children[1]
+                rel.add_edge(do, redo)
+                rel.add_edge(redo, do)
+                graph = DecisionGraph(rel, [do], [do], false)
+                graph = graph.reduce_silent_transitions()
+                return process_powl(graph)
             else:
                 raise Exception("Unknown operator! This should not be possible!")
-            return var_name
 
         elif isinstance(powl, StrictPartialOrder) or isinstance(powl, DecisionGraph):
             nodes = powl.order.nodes
@@ -74,8 +79,8 @@ def translate_powl_to_code(powl_obj):
             nodes_in_edges = set()
             for source in nodes:
                 for target in nodes:
-                    source_var = node_var_map.get(source, None)
-                    target_var = node_var_map.get(target, None)
+                    source_var = node_var_map[source]
+                    target_var = node_var_map[target]
                     if order.is_edge(source, target):
                         dependencies.append(f"({source_var}, {target_var})")
                         nodes_in_edges.update([source, target])
@@ -96,7 +101,7 @@ def translate_powl_to_code(powl_obj):
             return var_name
 
         else:
-            raise Exception("Unknown POWL object! This should not be possible!")
+            raise Exception(f"Unknown POWL object {type(powl)}! This should not be possible!")
 
     final_var = process_powl(powl_obj)
     code_lines.append(f"final_model = {final_var}")
