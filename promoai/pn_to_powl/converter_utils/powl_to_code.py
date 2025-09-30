@@ -91,7 +91,7 @@ def translate_powl_to_code(powl_obj):
             var_name = get_new_var_name()
             code_lines.append(
                 f"{var_name} = gen.partial_order(dependencies=[{dep_str}])"
-            ) if dependencies else code_lines.append(f"{var_name} = gen.decision_graph(dependencies=[{dep_str}])"
+            ) if isinstance(powl, StrictPartialOrder) else code_lines.append(f"{var_name} = gen.decision_graph(dependencies=[{dep_str}])"
             )
             return var_name
 
