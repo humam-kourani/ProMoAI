@@ -62,29 +62,30 @@ def translate_powl_to_code(powl_obj):
             return var_name
 
         elif isinstance(powl, StrictPartialOrder) or isinstance(powl, DecisionGraph):
-            nodes = powl.get_children() if isinstance(powl, StrictPartialOrder) else powl.children
-            order = powl.order.get_transitive_reduction()
+            nodes = powl.order.nodes
+            if isinstance(powl, StrictPartialOrder):
+                order = powl.order.get_transitive_reduction()
+            elif isinstance(powl, DecisionGraph):
+                order = powl.order
+            else:
+                raise Exception("Unknown POWL object! This should not be possible!")
             node_var_map = {node: process_powl(node) for node in nodes}
             dependencies = []
             nodes_in_edges = set()
             for source in nodes:
                 for target in nodes:
-                    # Check if it has attribute start and end
-                    if hasattr(powl, 'start') and hasattr(powl, 'end'):
-                        if source == powl.start or target == powl.end:
-                            # Artificially added, so we skip them
-                            continue
-                    source_var = node_var_map[source]
-                    target_var = node_var_map[target]
+                    source_var = node_var_map.get(source, None)
+                    target_var = node_var_map.get(target, None)
                     if order.is_edge(source, target):
                         dependencies.append(f"({source_var}, {target_var})")
                         nodes_in_edges.update([source, target])
 
-            # Include nodes not in any edge as singleton tuples
-            for node in nodes:
-                if node not in nodes_in_edges:
-                    var = node_var_map[node]
-                    dependencies.append(f"({var},)")
+            if isinstance(powl, StrictPartialOrder):
+                # Include nodes not in any edge as singleton tuples
+                for node in nodes:
+                    if node not in nodes_in_edges:
+                        var = node_var_map[node]
+                        dependencies.append(f"({var},)")
 
             dep_str = ", ".join(dependencies)
             var_name = get_new_var_name()
