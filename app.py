@@ -5,15 +5,15 @@ import tempfile
 
 import promoai
 import streamlit as st
-from pm4py import read_bpmn, read_pnml, read_xes
-from powl.conversion.variants.to_bpmn import apply as convert_to_bpmn
+from pm4py import read_bpmn, read_pnml
+from powl import convert_to_bpmn, import_event_log
 
 from pm4py.objects.bpmn.exporter.variants.etree import get_xml_string
-from pm4py.objects.bpmn.layout import layouter as bpmn_layouter
 from pm4py.objects.petri_net.exporter.variants.pnml import export_petri_as_string
 from pm4py.util import constants
 from pm4py.visualization.bpmn import visualizer as bpmn_visualizer
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
+from powl.conversion.variants.to_petri_net import apply as convert_to_petri_net
 from promoai.general_utils.ai_providers import (
     AI_HELP_DEFAULTS,
     AI_MODEL_DEFAULTS,
@@ -132,7 +132,7 @@ def run_app():
                         mode="wb", delete=False, dir=temp_dir, suffix=uploaded_log.name
                     ) as temp_file:
                         temp_file.write(contents)
-                        log = read_xes(temp_file.name, variant="rustxes")
+                        log = import_event_log(temp_file.name)
                     shutil.rmtree(temp_dir, ignore_errors=True)
 
                     process_model = promoai.generate_model_from_event_log(log, threshold)
@@ -236,8 +236,8 @@ def run_app():
                 st.write("Export Model")
                 process_model_obj = st.session_state["model_gen"]
                 powl = process_model_obj.get_powl()
-                bpmn = convert_to_bpmn(powl)[0]
-                bpmn = bpmn_layouter.apply(bpmn)
+                pn, im, fm = convert_to_petri_net(powl)
+                bpmn = convert_to_bpmn(powl)
                 download_1, download_2 = st.columns(2)
                 with download_1:
                     bpmn_data = get_xml_string(
@@ -251,8 +251,6 @@ def run_app():
                     )
 
                 with download_2:
-                    from powl.conversion.variants.to_petri_net import apply as convert_to_petri_net
-                    pn, im, fm = convert_to_petri_net(powl)
                     pn_data = export_petri_as_string(pn, im, fm)
                     st.download_button(
                         label="Download PNML",
