@@ -1,7 +1,8 @@
-import pm4py
 from powl.objects.obj import POWL
+from powl import convert_to_bpmn, view as view_powl
+
+import pm4py
 from pm4py.util import constants
-from pm4py.objects.bpmn.layout import layouter as bpmn_layouter
 
 from promoai.model_generation import code_extraction
 from promoai.model_generation.model_generation import generate_model
@@ -58,10 +59,7 @@ class LLMProcessModelGenerator:
         return convert_to_petri_net(self.process_model)
 
     def get_bpmn(self):
-        net, im, fm = self.get_petri_net()
-        from pm4py import convert_to_bpmn
-
-        bpmn_model = convert_to_bpmn(net, im, fm)
+        bpmn_model = convert_to_bpmn(self.process_model)
         return bpmn_model
 
     def update(self, feedback: str, api_key: str, ai_model: str, ai_provider: str):
@@ -83,7 +81,7 @@ class LLMProcessModelGenerator:
         pm4py.view_petri_net(net, im, fm, format=image_format)
 
     def view_powl(self, image_format: str = "svg"):
-        pm4py.view_powl(self.process_model, format=image_format)
+        view_powl(self.process_model)
 
     def export_bpmn(self, file_path: str, encoding: str = constants.DEFAULT_ENCODING):
         if not file_path.lower().endswith("bpmn"):
@@ -92,8 +90,6 @@ class LLMProcessModelGenerator:
             )
         bpmn_model = self.get_bpmn()
         from pm4py.objects.bpmn.exporter import exporter
-        bpmn_model = bpmn_layouter.apply(bpmn_model)
-
         exporter.apply(bpmn_model, file_path, parameters={"encoding": encoding})
 
     def export_petri_net(
