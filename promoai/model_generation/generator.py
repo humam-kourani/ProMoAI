@@ -154,12 +154,6 @@ class ModelGenerator:
             raise Exception("" \
             "A decision graph has at least one node. The provided list should comprise of at least one element."
             )
-        elif len(list_children) == 1:
-            # Check if it is skippable
-            if set(dependencies) != set([(None, list_children[0]), (list_children[0], None), (None, None)]):
-                raise Exception(
-                    "A decision graph with a single node must be skippable, i.e., it must have dependencies [(None, A), (A, None), (None, None)]"
-                )
                 
         children = dict()
         for child in list_children:
