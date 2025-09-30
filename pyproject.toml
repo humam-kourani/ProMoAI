@@ -19,18 +19,14 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10"
 ]
-dependencies = [
-  "powl",
-  "streamlit"
-]
-dynamic = ["version"]
-
 
 [project.urls]
 "Repository" = "https://github.com/humam-kourani/ProMoAI"
 
 [tool.setuptools.packages.find]
 include = ["promoai*"]
+
+dynamic = ["version", "dependencies"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
