@@ -1,6 +1,5 @@
 from pm4py import BPMN, convert_to_petri_net, PetriNet
 from powl.main import discover as discover_powl
-from powl.discovery.total_order_based.inductive.variants.powl_discovery_varaints import POWLDiscoveryVariant
 
 from promoai.aipa.bpmn_analyzer import BPMNAnalyzer
 from promoai.model_generation.llm_model_generator import LLMProcessModelGenerator

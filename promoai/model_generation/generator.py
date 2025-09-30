@@ -9,7 +9,6 @@ from powl.objects.obj import (
     DecisionGraph
 )
 from powl.objects.BinaryRelation import BinaryRelation
-from collections import defaultdict
 import networkx as nx
 
 def get_node_type(node):
@@ -31,7 +30,7 @@ def get_node_type(node):
 
 
 class ModelGenerator:
-    def __init__(self, enable_nested_partial_orders=False, copy_duplicates=False, enable_nested_decision_graphs=False):
+    def __init__(self, enable_nested_partial_orders=True, copy_duplicates=False, enable_nested_decision_graphs=True):
         self.used_as_submodel = []
         self.nested_partial_orders = enable_nested_partial_orders
         self.copy_duplicates = copy_duplicates
