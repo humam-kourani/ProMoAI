@@ -20,6 +20,7 @@ def extract_model_from_response(
     extracted_code = extract_final_python_code(response)
     variable_name = "final_model"
     result = execute_code_and_get_variable(extracted_code, variable_name)
+    result = result.simplify()
     # validate_unique_transitions(result)
     validate_partial_orders_with_missing_transitive_edges(result)
     return extracted_code, result
