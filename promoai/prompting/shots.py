@@ -436,9 +436,13 @@ def m9():
 
     decision_graph = gen.decision_graph(
         dependencies = [
+            (None, p1),
+            (None, p2),
             (p1, p3),
             (p2, p3),
-            (p2, p4)
+            (p2, p4),
+            (p3, None),
+            (p4, None),
         ]
     )
     # Now the po part
