@@ -7,9 +7,6 @@
 """
 
 
-import pm4py
-from pm4py.objects.conversion.powl.variants.to_petri_net import apply as to_pn
-
 from promoai.model_generation import ModelGenerator
 
 d1 = (
@@ -23,30 +20,29 @@ d1 = (
 def m1():
     gen = ModelGenerator()
     a = gen.activity("a")
-    a_copy = a.copy()
+    a_copy = gen.copy(a)
     a_looped = gen.self_loop(a)
     b = gen.activity("b")
     c = gen.activity("c")
     d = gen.activity("d")
-    model = gen.decision_graph(dependencies=[
+    seq_c_d = gen.partial_order(dependencies=[(c, d)])
+    skippable_c_d = gen.skip(seq_c_d)
+    dg = gen.decision_graph(dependencies=[
         (None, a_looped),
         (None, b),
-        (a_looped, c),
-        (b, c),
-        (c, d),
-        (d, a_copy),
+        (a_looped, skippable_c_d),
+        (b, skippable_c_d),
+        (skippable_c_d, a_copy),
         (a_copy, None),
-        (a_looped, None),
-        (b, None)
     ])
-    skippable_model = gen.skip(model)
-    return skippable_model
+    final_model = gen.skip(dg)
+    return final_model
 
 
 e1 = (
     "a common error for this process is to add a dependency 'd -> a' without creating a"
     " copy of 'a'. This would imply that the whole process can be executed once again, which is not stated in the description."
-    " Another common error is not to model the dependency that the process can end at the looped a or b."
+    " Another common error is not to mark the sequence c -> d as skippable."
 )
 
 d1_2 = (
@@ -76,37 +72,8 @@ def m1_2():
 
 
 e1_2 = (
-    "a common error for this process is to add a dependency 'd -> a.copy()'."
-    " This would imply that the whole process cannot be executed again."
-    " Another common error is to not add a dependency a->a (self-loop)."
-)
-
-d1_3 = (
-    "in this process, you can either do 'a' or 'b'. If 'a' is selected,"
-    " then it can be repeated. After completing 'a' or 'b', 'c' is executed, followed by 'd'."
-)
-
-
-def m1_2():
-    gen = ModelGenerator()
-    a = gen.activity("a")
-    a_looped = gen.self_loop(a)
-    b = gen.activity("b")
-    c = gen.activity("c")
-    d = gen.activity("d")
-    final_model = gen.decision_graph(dependencies=[
-        (None, a_looped),
-        (None, b),
-        (a_looped, c),
-        (b, c),
-        (c, d),
-        (d, None)
-    ])
-    return final_model
-
-
-e1_2 = (
-    "A common mistake here would be to break the process into separable parts, e.g., partial order expressing (c,d)."
+    "A common error for this process is to create a copy of 'a' instead of looping back. Another "
+    "common mistake here would be to break the process into separable parts, e.g., partial order expressing (c,d)."
     "This is not necessary, as decision graphs can express simple sequential dependencies."
 )
 
@@ -160,21 +127,21 @@ def m3():
     activity_2 = gen.activity("calculate pay")
     activity_3 = gen.activity("issue payments")
     activity_4 = gen.activity("generate reports")
-    partial_order_1 = gen.partial_order(dependencies=[(activity_3, ), (activity_4, )])
-
-    final_model = gen.decision_graph(dependencies=[
-        (None, track_time_looped),
-        (track_time_looped, activity_2),
-        (activity_2, partial_order_1),
-        (partial_order_1, None),
-    ])
+    final_model = gen.partial_order(
+        dependencies=[
+            (track_time_looped, activity_2),
+            (activity_2, activity_3),
+            (activity_2, activity_4),
+        ]
+    )
     return final_model
 
 
 e3 = (
     "a common error for this process is to model a choice between activity_3 and activity_4 instead of the"
-    " concurrency. Additionally, a common mistake is to integrate the partial order into the decision graph."
-    "This is not possible here, as decision graphs cannot express concurrency."
+    " concurrency. Additionally, a common mistake is to try to model the final model as a decision graph instead"
+    " of a partial order. This is not possible here, as decision graphs cannot express the concurrency between"
+    " activity_3 and activity_4."
 )
 
 d4 = (
@@ -192,7 +159,9 @@ def m4():
     # subprocess 1
     a = gen.activity("a")
     b = gen.activity("b")
-    choice_c_d = gen.decision_graph(dependencies=[(None, gen.activity("c")), (None, gen.activity("d")), (gen.activity("c"), None), (gen.activity("d"), None)])
+    c = gen.activity("c")
+    d = gen.activity("d")
+    choice_c_d = gen.decision_graph(dependencies=[(None, c), (None, d), (c, None), (d, None)])
 
     # subprocess 2
     e = gen.activity("e")   
@@ -315,7 +284,7 @@ def m6():
         (reserve, None),
         (back_order, None),
     ])
-    # Done per part in the part list
+
     part_subprocess = gen.self_loop(part_subprocess)
     concurrency = gen.partial_order(dependencies =
         [(part_subprocess,), (prepare_assembly,)]
@@ -340,7 +309,6 @@ def m6():
 
 e6 = (
     "a common error is not to create a partial order for the concurrency between the part handling subprocess and the preparation of the assembly."
-    " Additionally, a common mistake is to integrate the partial order into the decision graph."
 )
 
 d7 = (
@@ -383,8 +351,8 @@ def m8():
 
 e8 = (
     "A common error for this process is to include useless partial order structures instead of using one decision graph to model the whole behavior."
-    " Note that partial orders can be embedded in decision graphs, but decision graphs cannot be embedded in partial orders."
 )
+
 d9 = (
     "The process starts with checking part stock availability.",
     "After that, we either cancel the order because we don't have the required parts to produce it,"
@@ -398,47 +366,27 @@ d9 = (
 def m9():
     gen = ModelGenerator()
 
-    def __generate_production_block():
-        check_part = gen.activity("Check production schedule")
-        schedule_part = gen.activity("Schedule production")
-        prod_part = gen.activity("Produce machines")
-        ship_part = gen.activity("Ship machines")
-        return gen.partial_order(dependencies=[(check_part, schedule_part), (schedule_part, prod_part), (prod_part, ship_part)])
-    
-    def __cancel_order():
-        return gen.activity("Cancel order")
-    
-    def __notify_email():
-        return gen.activity("Notify via email")
+    check_part = gen.activity("Check production schedule")
+    schedule_part = gen.activity("Schedule production")
+    prod_part = gen.activity("Produce machines")
+    ship_part = gen.activity("Ship machines")
+    production_block = gen.partial_order(dependencies=[(check_part, schedule_part), (schedule_part, prod_part), (prod_part, ship_part)])
 
-    def __notify_system():
-        return gen.activity("Notify via system")
+    check_stock = gen.activity("Check part stock availability")
+    cancel = gen.activity("Cancel order")
+    notify_email = gen.activity("Notify via email")
+    notify_system = gen.activity("Notify via system")
 
-    def __check_stock():
-        return gen.activity("Check part stock availability")
-    
-    # Build first the decision_graph
-    p1 = __cancel_order()
-    p2 = __generate_production_block()
-    p3 = __notify_email()
-    p4 = __notify_system()
-
-    decision_graph = gen.decision_graph(
+    final_model = gen.decision_graph(
         dependencies = [
-            (None, p1),
-            (None, p2),
-            (p1, p3),
-            (p2, p3),
-            (p2, p4),
-            (p3, None),
-            (p4, None),
-        ]
-    )
-    # Now the po part
-    p0 = __check_stock()
-    final_model = gen.partial_order(
-        dependencies = [
-            (p0, decision_graph)
+            (None, check_stock),
+            (check_stock, cancel),
+            (check_stock, production_block),
+            (cancel, notify_email),
+            (production_block, notify_email),
+            (production_block, notify_system),
+            (notify_email, None),
+            (notify_system, None),
         ]
     )
 
@@ -522,6 +470,9 @@ SHOTS = [
 ]
 
 if __name__ == "__main__":
-    model = m6()
-    pn, im, fm = to_pn(model)
-    pm4py.view_petri_net(pn, im, fm)
+    from pm4py import view_petri_net
+    from powl import convert_to_petri_net, view
+    model = m9().simplify()
+    view(model)
+    pn, im, fm = convert_to_petri_net(model)
+    view_petri_net(pn, im, fm, format="SVG")
