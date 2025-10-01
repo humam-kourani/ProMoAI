@@ -223,4 +223,18 @@ class ModelGenerator:
         return order
 
 
+    def self_loop(self, node : POWL):
+        if node is None:
+            raise Exception("Cannot create a self-loop over an empty model!")
+        child = self.create_model(node)
+        return OperatorPOWL(Operator.LOOP, [child, child])
+    
+    def skip(self, node : POWL):
+        if node is None:
+            raise Exception("Cannot create a skip over an empty model!")
+        child = self.create_model(node)
+        silent = SilentTransition()
+        return OperatorPOWL(Operator.XOR, [child, silent])
+
+
 

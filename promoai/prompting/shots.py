@@ -23,29 +23,30 @@ d1 = (
 def m1():
     gen = ModelGenerator()
     a = gen.activity("a")
+    a_copy = a.copy()
+    a_looped = gen.self_loop(a)
     b = gen.activity("b")
     c = gen.activity("c")
     d = gen.activity("d")
-    a_copy = a.copy()
     model = gen.decision_graph(dependencies=[
-        (None, a),
+        (None, a_looped),
         (None, b),
-        (None, None),
-        (a, a),
-        (a, c),
+        (a_looped, c),
         (b, c),
         (c, d),
         (d, a_copy),
         (a_copy, None),
-        (a, None),
+        (a_looped, None),
         (b, None)
     ])
-    return model
+    skippable_model = gen.skip(model)
+    return skippable_model
 
 
 e1 = (
     "a common error for this process is to add a dependency 'd -> a' without creating a"
     " copy of 'a'. This would imply that the whole process can be executed once again, which is not stated in the description."
+    " Another common error is not to model the dependency that the process can end at the looped a or b."
 )
 
 d1_2 = (
@@ -58,17 +59,17 @@ d1_2 = (
 def m1_2():
     gen = ModelGenerator()
     a = gen.activity("a")
+    a_looped = gen.self_loop(a)
     b = gen.activity("b")
     c = gen.activity("c")
     d = gen.activity("d")
     final_model = gen.decision_graph(dependencies=[
-        (None, a),
-        (a, a),
+        (None, a_looped),
         (None, b),
-        (a, c),
+        (a_looped, c),
         (b, c),
         (c, d),
-        (d, a),
+        (d, a_looped),
         (d, None)
     ])
     return final_model
@@ -89,14 +90,14 @@ d1_3 = (
 def m1_2():
     gen = ModelGenerator()
     a = gen.activity("a")
+    a_looped = gen.self_loop(a)
     b = gen.activity("b")
     c = gen.activity("c")
     d = gen.activity("d")
     final_model = gen.decision_graph(dependencies=[
-        (None, a),
-        (a, a),
+        (None, a_looped),
         (None, b),
-        (a, c),
+        (a_looped, c),
         (b, c),
         (c, d),
         (d, None)
@@ -121,14 +122,13 @@ d2 = (
 
 def m2():
     gen = ModelGenerator()
-    restock = gen.activity("restock items")
+    restock = gen.self_loop(gen.activity("restock items"))
     fulfil = gen.activity("fulfill orders")
     urgent_restock = gen.activity("urgent restock")
     inventory_audit = gen.activity("inventory audit")
     data_analysis = gen.activity("data analysis")
-    final_model = gen.decision_graph(dependencies=[
+    dg = gen.decision_graph(dependencies=[
         (None, restock),
-        (restock, restock),
         (None, fulfil),
         (None, urgent_restock),
         (restock, inventory_audit),
@@ -136,15 +136,14 @@ def m2():
         (urgent_restock, inventory_audit),
         (inventory_audit, data_analysis),
         (inventory_audit, None),
-        (data_analysis, None),
-        (None, None)
+        (data_analysis, None)
     ])
-    final_model = gen.loop(do=final_model, redo=None)
+    final_model = gen.skip(gen.self_loop(dg))
     return final_model
 
 
 e2 = "a common error for this process is to copy 'inventory_audit'. Another common error is to create a partial order for" \
-" sequential dependencies that can be expressed via the decision graph. Additionally, a common mistake is to omit the self-loop on 'restock items'."
+" sequential dependencies that can be expressed via the decision graph. Additionally, a common mistake is to omit the self-loop on 'restock items' or on the whole process."
 
 d3 = (
     "This enhanced payroll process allows for a high degree of customization and adaptation to specific "
@@ -157,15 +156,15 @@ d3 = (
 def m3():
     gen = ModelGenerator()
     track_time = gen.activity("track time")
+    track_time_looped = gen.self_loop(track_time)
     activity_2 = gen.activity("calculate pay")
     activity_3 = gen.activity("issue payments")
     activity_4 = gen.activity("generate reports")
     partial_order_1 = gen.partial_order(dependencies=[(activity_3, ), (activity_4, )])
 
     final_model = gen.decision_graph(dependencies=[
-        (None, track_time),
-        (track_time, track_time),
-        (track_time, activity_2),
+        (None, track_time_looped),
+        (track_time_looped, activity_2),
         (activity_2, partial_order_1),
         (partial_order_1, None),
     ])
@@ -196,12 +195,12 @@ def m4():
     choice_c_d = gen.decision_graph(dependencies=[(None, gen.activity("c")), (None, gen.activity("d")), (gen.activity("c"), None), (gen.activity("d"), None)])
 
     # subprocess 2
-    e = gen.activity("e")
-    unskippable_self_loop_e = gen.decision_graph(dependencies=[(None, e), (e, e), (e, None), (None, None)])
+    e = gen.activity("e")   
+    unskippable_self_loop_e = gen.self_loop(e)
 
     # subprocess 3
     f = gen.activity("f")
-    skippable_self_loop_f = gen.decision_graph(dependencies=[(None, f), (f, None), (None, None)])
+    skippable_self_loop_f = gen.skip(gen.self_loop(f))
 
     # subprocess 4
     g = gen.activity("g")
@@ -250,18 +249,10 @@ def m5():
     test_functionality_after_hardware_repair = gen.activity("Test system functionality")
     test_functionality_after_software_repair = gen.activity("Test system functionality")
     additional_hardware_repair = gen.activity("Perform additional hardware repairs")
+    skippable_repair_after_hardware_repair = gen.skip(additional_hardware_repair)
     additional_software_repair = gen.activity("Perform additional software repairs")
+    skippable_repair_after_software_repair = gen.skip(additional_software_repair)
     finish_repair = gen.activity("Finish repair")
-    skippable_repair_after_hardware_repair = gen.decision_graph(dependencies=[
-        (None, additional_hardware_repair),
-        (test_functionality_after_hardware_repair, None),
-        (None, None)
-    ])
-    skippable_repair_after_software_repair = gen.decision_graph(dependencies=[
-        (None, additional_software_repair),
-        (test_functionality_after_software_repair, None),
-        (None, None)
-    ])
     partial_order_repairs = gen.partial_order(
         dependencies=[(repair_hardware, test_functionality_after_hardware_repair), (repair_software, test_functionality_after_software_repair),
                       (test_functionality_after_hardware_repair, skippable_repair_after_hardware_repair),
@@ -275,7 +266,6 @@ def m5():
         (cost_calculation, partial_order_repairs),
         (partial_order_repairs, finish_repair),
         (finish_repair, None),
-        (None, None)
     ])
 
 
@@ -324,10 +314,9 @@ def m6():
         (check_part, back_order),
         (reserve, None),
         (back_order, None),
-        (None, None)
     ])
     # Done per part in the part list
-    part_subprocess = gen.decision_graph(dependencies=[(None, part_subprocess), (part_subprocess, None), (part_subprocess, part_subprocess)])
+    part_subprocess = gen.self_loop(part_subprocess)
     concurrency = gen.partial_order(dependencies =
         [(part_subprocess,), (prepare_assembly,)]
     )
@@ -436,9 +425,13 @@ def m9():
 
     decision_graph = gen.decision_graph(
         dependencies = [
+            (None, p1),
+            (None, p2),
             (p1, p3),
             (p2, p3),
-            (p2, p4)
+            (p2, p4),
+            (p3, None),
+            (p4, None),
         ]
     )
     # Now the po part
