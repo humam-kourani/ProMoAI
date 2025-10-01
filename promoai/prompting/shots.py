@@ -314,7 +314,6 @@ def m6():
         (check_part, back_order),
         (reserve, None),
         (back_order, None),
-        (None, None)
     ])
     # Done per part in the part list
     part_subprocess = gen.self_loop(part_subprocess)
