@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import powl
 from powl.objects.obj import (
     Operator,
@@ -54,7 +56,7 @@ class ModelGenerator:
                 )
             if node in self.used_as_submodel:
                 if self.copy_duplicates:
-                    res = node.copy()
+                    res = deepcopy(node)
                 else:
                     node_type = get_node_type(node)
                     raise Exception(
@@ -227,7 +229,8 @@ class ModelGenerator:
         if node is None:
             raise Exception("Cannot create a self-loop over an empty model!")
         child = self.create_model(node)
-        return OperatorPOWL(Operator.LOOP, [child, child])
+        silent = SilentTransition()
+        return OperatorPOWL(Operator.LOOP, [child, silent])
     
     def skip(self, node : POWL):
         if node is None:
@@ -235,6 +238,10 @@ class ModelGenerator:
         child = self.create_model(node)
         silent = SilentTransition()
         return OperatorPOWL(Operator.XOR, [child, silent])
+
+    @staticmethod
+    def copy(node : POWL):
+        return deepcopy(node)
 
 
 
