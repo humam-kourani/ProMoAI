@@ -9,7 +9,6 @@ from powl.objects.obj import (
     EndNode
 )
 from pm4py.objects.process_tree.obj import Operator
-from sympy import false
 
 from promoai.prompting.prompt_engineering import import_statement
 
@@ -51,7 +50,7 @@ def translate_powl_to_code(powl_obj):
             children = powl.children
             if operator == Operator.XOR:
                 rel = BinaryRelation(children)
-                graph = DecisionGraph(rel, children, children, false)
+                graph = DecisionGraph(rel, children, children, False)
                 graph = graph.reduce_silent_transitions()
                 return process_powl(graph)
             elif operator == Operator.LOOP:
@@ -60,7 +59,7 @@ def translate_powl_to_code(powl_obj):
                 redo = children[1]
                 rel.add_edge(do, redo)
                 rel.add_edge(redo, do)
-                graph = DecisionGraph(rel, [do], [do], false)
+                graph = DecisionGraph(rel, [do], [do], False)
                 graph = graph.reduce_silent_transitions()
                 return process_powl(graph)
             else:

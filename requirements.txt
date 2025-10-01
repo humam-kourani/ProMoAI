@@ -7,4 +7,3 @@ google-generativeai
 anthropic
 rustxes
 cohere
-sympy
