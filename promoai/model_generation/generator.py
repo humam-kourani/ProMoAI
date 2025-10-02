@@ -205,11 +205,10 @@ class ModelGenerator:
                         binary_relation.add_edge(children[source], children[target])
         # Check if all nodes are from start to end
         for node in list_children:
-            if node not in start_nodes and node not in end_nodes:
-                if not (nx.has_path(G, "ArtificialStart", node) and nx.has_path(G, node, "ArtificialEnd")):
-                    raise Exception(
-                        f"All nodes in a decision graph must be on a path from a start node to an end node, {children[node]} isn't!"
-                    )
+            if not (nx.has_path(G, "ArtificialStart", node) and nx.has_path(G, node, "ArtificialEnd")):
+                raise Exception(
+                    f"All nodes in a decision graph must be on a path from a start node to an end node, {children[node]} isn't!"
+                )
         order = DecisionGraph(binary_relation, start_nodes, end_nodes, empty_path=empty_path)
         children = order.children
         if self.nested_decision_graphs:
