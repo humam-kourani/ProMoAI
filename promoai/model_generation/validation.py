@@ -1,6 +1,6 @@
 from typing import List as TList, Union
 
-from pm4py.objects.powl.obj import (
+from powl.objects.obj import (
     POWL,
     SilentTransition,
     StrictPartialOrder,

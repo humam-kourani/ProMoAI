@@ -199,6 +199,7 @@ def generate_result_with_error_handling(
             error_history.append(error_description)
             if constants.ENABLE_PRINTS:
                 print("Error detected in iteration " + str(iteration + 1))
+                print("\t" + error_description.replace("\n", " ").replace("\r", " "))
             new_message = (
                 f"Executing your code led to an error! "
                 + standard_error_message

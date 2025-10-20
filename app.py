@@ -5,13 +5,15 @@ import tempfile
 
 import promoai
 import streamlit as st
-from pm4py import convert_to_bpmn, convert_to_petri_net, read_bpmn, read_pnml, read_xes
+from pm4py import read_bpmn, read_pnml
+from powl import convert_to_bpmn, import_event_log
+
 from pm4py.objects.bpmn.exporter.variants.etree import get_xml_string
-from pm4py.objects.bpmn.layout import layouter as bpmn_layouter
 from pm4py.objects.petri_net.exporter.variants.pnml import export_petri_as_string
 from pm4py.util import constants
 from pm4py.visualization.bpmn import visualizer as bpmn_visualizer
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
+from powl.conversion.variants.to_petri_net import apply as convert_to_petri_net
 from promoai.general_utils.ai_providers import (
     AI_HELP_DEFAULTS,
     AI_MODEL_DEFAULTS,
@@ -31,22 +33,6 @@ def run_app():
     st.subheader("Process Modeling with Generative AI")
 
     temp_dir = "temp"
-
-    system_dot = shutil.which("dot")
-    if system_dot:
-        print(f"Found system-wide 'dot' at: {system_dot}")
-    else:
-        base_path = "/home/adminuser/.conda"
-        possible_subpaths = ["bin"]
-
-        for sub in possible_subpaths:
-            candidate = os.path.join(base_path, sub, "dot")
-            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-                print(f"Found 'dot' at: {candidate}")
-                os.environ["PATH"] += os.pathsep + os.path.dirname(candidate)
-                break
-        else:
-            st.error(body="Couldn't find 'dot' — is Graphviz installed?", icon="⚠️")
 
     if "provider" not in st.session_state:
         st.session_state["provider"] = DEFAULT_AI_PROVIDER
@@ -125,6 +111,15 @@ def run_app():
                 type=["xes", "gz"],
                 help=DISCOVERY_HELP,
             )
+
+            threshold = st.number_input(
+                label="Noise Filtering Threshold (0.0 = No Filtering)",
+                min_value=0.0,
+                max_value=1.0,
+                value=0.0,
+                step=0.01,
+            )
+
             submit_button = st.form_submit_button(label="Run")
             if submit_button:
                 if uploaded_log is None:
@@ -137,10 +132,10 @@ def run_app():
                         mode="wb", delete=False, dir=temp_dir, suffix=uploaded_log.name
                     ) as temp_file:
                         temp_file.write(contents)
-                        log = read_xes(temp_file.name, variant="rustxes")
+                        log = import_event_log(temp_file.name)
                     shutil.rmtree(temp_dir, ignore_errors=True)
 
-                    process_model = promoai.generate_model_from_event_log(log)
+                    process_model = promoai.generate_model_from_event_log(log, threshold)
 
                     st.session_state["model_gen"] = process_model
                     st.session_state["feedback"] = []
@@ -242,9 +237,7 @@ def run_app():
                 process_model_obj = st.session_state["model_gen"]
                 powl = process_model_obj.get_powl()
                 pn, im, fm = convert_to_petri_net(powl)
-                bpmn = convert_to_bpmn(pn, im, fm)
-                bpmn = bpmn_layouter.apply(bpmn)
-
+                bpmn = convert_to_bpmn(powl)
                 download_1, download_2 = st.columns(2)
                 with download_1:
                     bpmn_data = get_xml_string(
@@ -272,9 +265,9 @@ def run_app():
 
             image_format = str("svg").lower()
             if view_option == ViewType.POWL.value:
-                from pm4py.visualization.powl import visualizer
+                from powl.visualization.powl import visualizer
 
-                vis_str = visualizer.apply(powl, parameters={"format": image_format})
+                vis_str = visualizer.apply(powl)
 
             elif view_option == ViewType.PETRI.value:
                 visualization = pn_visualizer.apply(

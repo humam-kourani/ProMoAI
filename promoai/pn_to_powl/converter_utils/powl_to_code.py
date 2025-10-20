@@ -1,8 +1,12 @@
-from pm4py.objects.powl.obj import (
+from powl.objects.BinaryRelation import BinaryRelation
+from powl.objects.obj import (
     OperatorPOWL,
     SilentTransition,
     StrictPartialOrder,
     Transition,
+    DecisionGraph,
+    StartNode,
+    EndNode
 )
 from pm4py.objects.process_tree.obj import Operator
 
@@ -38,31 +42,37 @@ def translate_powl_to_code(powl_obj):
                 code_lines.append(f"{var_name} = gen.activity('{label}')")
             return var_name
 
+        elif isinstance(powl, StartNode) or isinstance(powl, EndNode):
+            return None
+
         elif isinstance(powl, OperatorPOWL):
             operator = powl.operator
             children = powl.children
-            child_vars = [process_powl(child) for child in children]
-            var_name = get_new_var_name()
             if operator == Operator.XOR:
-                child_vars_str = ", ".join(child_vars)
-                code_lines.append(f"{var_name} = gen.xor({child_vars_str})")
+                rel = BinaryRelation(children)
+                graph = DecisionGraph(rel, children, children, False)
+                graph = graph.reduce_silent_transitions()
+                return process_powl(graph)
             elif operator == Operator.LOOP:
-                if len(child_vars) != 2:
-                    raise Exception(
-                        "A loop of invalid size! This should not be possible!"
-                    )
-                do_var = child_vars[0]
-                redo_var = child_vars[1]
-                code_lines.append(
-                    f"{var_name} = gen.loop(do={do_var}, redo={redo_var})"
-                )
+                rel = BinaryRelation(children)
+                do = children[0]
+                redo = children[1]
+                rel.add_edge(do, redo)
+                rel.add_edge(redo, do)
+                graph = DecisionGraph(rel, [do], [do], False)
+                graph = graph.reduce_silent_transitions()
+                return process_powl(graph)
             else:
                 raise Exception("Unknown operator! This should not be possible!")
-            return var_name
 
-        elif isinstance(powl, StrictPartialOrder):
-            nodes = powl.get_children()
-            order = powl.order.get_transitive_reduction()
+        elif isinstance(powl, StrictPartialOrder) or isinstance(powl, DecisionGraph):
+            nodes = powl.order.nodes
+            if isinstance(powl, StrictPartialOrder):
+                order = powl.order.get_transitive_reduction()
+            elif isinstance(powl, DecisionGraph):
+                order = powl.order
+            else:
+                raise Exception("Unknown POWL object! This should not be possible!")
             node_var_map = {node: process_powl(node) for node in nodes}
             dependencies = []
             nodes_in_edges = set()
@@ -74,21 +84,23 @@ def translate_powl_to_code(powl_obj):
                         dependencies.append(f"({source_var}, {target_var})")
                         nodes_in_edges.update([source, target])
 
-            # Include nodes not in any edge as singleton tuples
-            for node in nodes:
-                if node not in nodes_in_edges:
-                    var = node_var_map[node]
-                    dependencies.append(f"({var},)")
+            if isinstance(powl, StrictPartialOrder):
+                # Include nodes not in any edge as singleton tuples
+                for node in nodes:
+                    if node not in nodes_in_edges:
+                        var = node_var_map[node]
+                        dependencies.append(f"({var},)")
 
             dep_str = ", ".join(dependencies)
             var_name = get_new_var_name()
             code_lines.append(
                 f"{var_name} = gen.partial_order(dependencies=[{dep_str}])"
+            ) if isinstance(powl, StrictPartialOrder) else code_lines.append(f"{var_name} = gen.decision_graph(dependencies=[{dep_str}])"
             )
             return var_name
 
         else:
-            raise Exception("Unknown POWL object! This should not be possible!")
+            raise Exception(f"Unknown POWL object {type(powl)}! This should not be possible!")
 
     final_var = process_powl(powl_obj)
     code_lines.append(f"final_model = {final_var}")
