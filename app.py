@@ -6,13 +6,13 @@ import tempfile
 import promoai
 import streamlit as st
 from pm4py import read_bpmn, read_pnml
-from powl import convert_to_bpmn, import_event_log
 
 from pm4py.objects.bpmn.exporter.variants.etree import get_xml_string
 from pm4py.objects.petri_net.exporter.variants.pnml import export_petri_as_string
 from pm4py.util import constants
 from pm4py.visualization.bpmn import visualizer as bpmn_visualizer
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
+from powl import convert_to_bpmn, import_event_log
 from powl.conversion.variants.to_petri_net import apply as convert_to_petri_net
 from promoai.general_utils.ai_providers import (
     AI_HELP_DEFAULTS,
@@ -135,7 +135,9 @@ def run_app():
                         log = import_event_log(temp_file.name)
                     shutil.rmtree(temp_dir, ignore_errors=True)
 
-                    process_model = promoai.generate_model_from_event_log(log, threshold)
+                    process_model = promoai.generate_model_from_event_log(
+                        log, threshold
+                    )
 
                     st.session_state["model_gen"] = process_model
                     st.session_state["feedback"] = []

@@ -1,14 +1,14 @@
+from pm4py.objects.process_tree.obj import Operator
 from powl.objects.BinaryRelation import BinaryRelation
 from powl.objects.obj import (
+    DecisionGraph,
+    EndNode,
     OperatorPOWL,
     SilentTransition,
+    StartNode,
     StrictPartialOrder,
     Transition,
-    DecisionGraph,
-    StartNode,
-    EndNode
 )
-from pm4py.objects.process_tree.obj import Operator
 
 from promoai.prompting.prompt_engineering import import_statement
 
@@ -95,12 +95,15 @@ def translate_powl_to_code(powl_obj):
             var_name = get_new_var_name()
             code_lines.append(
                 f"{var_name} = gen.partial_order(dependencies=[{dep_str}])"
-            ) if isinstance(powl, StrictPartialOrder) else code_lines.append(f"{var_name} = gen.decision_graph(dependencies=[{dep_str}])"
+            ) if isinstance(powl, StrictPartialOrder) else code_lines.append(
+                f"{var_name} = gen.decision_graph(dependencies=[{dep_str}])"
             )
             return var_name
 
         else:
-            raise Exception(f"Unknown POWL object {type(powl)}! This should not be possible!")
+            raise Exception(
+                f"Unknown POWL object {type(powl)}! This should not be possible!"
+            )
 
     final_var = process_powl(powl_obj)
     code_lines.append(f"final_model = {final_var}")

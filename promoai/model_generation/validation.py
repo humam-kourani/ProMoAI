@@ -1,11 +1,6 @@
 from typing import List as TList, Union
 
-from powl.objects.obj import (
-    POWL,
-    SilentTransition,
-    StrictPartialOrder,
-    Transition,
-)
+from powl.objects.obj import POWL, SilentTransition, StrictPartialOrder, Transition
 
 
 def validate_partial_orders_with_missing_transitive_edges(powl: POWL):

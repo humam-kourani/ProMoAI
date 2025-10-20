@@ -1,17 +1,19 @@
 from copy import deepcopy
 
+import networkx as nx
+
 import powl
+from powl.objects.BinaryRelation import BinaryRelation
 from powl.objects.obj import (
+    DecisionGraph,
     Operator,
     OperatorPOWL,
     POWL,
     SilentTransition,
     StrictPartialOrder,
     Transition,
-    DecisionGraph
 )
-from powl.objects.BinaryRelation import BinaryRelation
-import networkx as nx
+
 
 def get_node_type(node):
     if node.__class__ is powl.objects.obj.Transition:
@@ -32,7 +34,12 @@ def get_node_type(node):
 
 
 class ModelGenerator:
-    def __init__(self, enable_nested_partial_orders=True, copy_duplicates=False, enable_nested_decision_graphs=True):
+    def __init__(
+        self,
+        enable_nested_partial_orders=True,
+        copy_duplicates=False,
+        enable_nested_decision_graphs=True,
+    ):
         self.used_as_submodel = []
         self.nested_partial_orders = enable_nested_partial_orders
         self.copy_duplicates = copy_duplicates
@@ -133,14 +140,15 @@ class ModelGenerator:
 
         res = order
         return res
-    
 
     def decision_graph(self, dependencies):
         list_children = []
         for dep in dependencies:
             if isinstance(dep, tuple):
                 if len(dep) != 2:
-                    raise Exception("Invalid dependency tuple in decision graph! Each tuple must contain exactly 2 elements.")
+                    raise Exception(
+                        "Invalid dependency tuple in decision graph! Each tuple must contain exactly 2 elements."
+                    )
                 for n in dep:
                     if n not in list_children and n is not None:
                         list_children.append(n)
@@ -153,10 +161,11 @@ class ModelGenerator:
                     " tuples of POWL models!"
                 )
         if len(list_children) < 1:
-            raise Exception("" \
-            "A decision graph has at least one node. The provided list should comprise of at least one element."
+            raise Exception(
+                ""
+                "A decision graph has at least one node. The provided list should comprise of at least one element."
             )
-                
+
         children = dict()
         for child in list_children:
             new_child = self.create_model(child)
@@ -170,17 +179,18 @@ class ModelGenerator:
             if isinstance(dep, tuple):
                 # Add both of them there
                 if len(dep) != 2:
-                    raise Exception("Invalid dependency tuple in decision graph! Each tuple must contain exactly 2 elements. " \
-                    "Note that None can be used to indicate start or end.")
+                    raise Exception(
+                        "Invalid dependency tuple in decision graph! Each tuple must contain exactly 2 elements. "
+                        "Note that None can be used to indicate start or end."
+                    )
                 source = dep[0]
                 target = dep[1]
                 if source is None and target is None:
                     empty_path = True
-                elif source is None: 
+                elif source is None:
                     start_nodes.append(children[target])
                 elif target is None:
                     end_nodes.append(children[source])
-            
 
         # Build a graph to check for edges
         G = nx.DiGraph()
@@ -205,11 +215,16 @@ class ModelGenerator:
                         binary_relation.add_edge(children[source], children[target])
         # Check if all nodes are from start to end
         for node in list_children:
-            if not (nx.has_path(G, "ArtificialStart", node) and nx.has_path(G, node, "ArtificialEnd")):
+            if not (
+                nx.has_path(G, "ArtificialStart", node)
+                and nx.has_path(G, node, "ArtificialEnd")
+            ):
                 raise Exception(
                     f"All nodes in a decision graph must be on a path from a start node to an end node, {children[node]} isn't!"
                 )
-        order = DecisionGraph(binary_relation, start_nodes, end_nodes, empty_path=empty_path)
+        order = DecisionGraph(
+            binary_relation, start_nodes, end_nodes, empty_path=empty_path
+        )
         children = order.children
         if self.nested_decision_graphs:
             pass
@@ -223,15 +238,14 @@ class ModelGenerator:
                     )
         return order
 
-
-    def self_loop(self, node : POWL):
+    def self_loop(self, node: POWL):
         if node is None:
             raise Exception("Cannot create a self-loop over an empty model!")
         child = self.create_model(node)
         silent = SilentTransition()
         return OperatorPOWL(Operator.LOOP, [child, silent])
-    
-    def skip(self, node : POWL):
+
+    def skip(self, node: POWL):
         if node is None:
             raise Exception("Cannot create a skip over an empty model!")
         child = self.create_model(node)
@@ -239,8 +253,5 @@ class ModelGenerator:
         return OperatorPOWL(Operator.XOR, [child, silent])
 
     @staticmethod
-    def copy(node : POWL):
+    def copy(node: POWL):
         return deepcopy(node)
-
-
-

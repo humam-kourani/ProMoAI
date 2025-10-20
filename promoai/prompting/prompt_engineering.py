@@ -141,9 +141,8 @@ def negative_prompting():
         "poset_2 = partial_order(dependencies=[(A, poset)])\n"
         "```\n\n"
         " A decision graph can have loops:"
-        " a cycle (e.g., `[(None, A), (A, B), (B, A), (A, None)]`) means that you always start with A, then you can go to B, then back to A, and so on." \
+        " a cycle (e.g., `[(None, A), (A, B), (B, A), (A, None)]`) means that you always start with A, then you can go to B, then back to A, and so on."
         "However, the cycle must include at least one start node and one end node (can be the same node)."
-
         "When using decision graphs, **keep the model as flat as possible**"
         "Examples of unflattened model:"
         "```python\n"
@@ -214,6 +213,30 @@ def update_conversation(
     )
     conversation.append({"role": "user", "content": f"{update_prompt}"})
     return conversation
+
+
+def cut_conversation(
+    conversation: List[dict[str:str]], pos: int
+) -> List[dict[str:str]]:
+
+    if pos < 0 or pos >= len(conversation):
+        raise ValueError("Invalid position to cut the conversation!")
+
+    cut_convo = conversation[: pos + 1]
+    # Ensure the last message is from the user and is not feedback
+    while cut_convo:
+        if cut_convo[-1]["role"] != "user":
+            cut_convo.pop()
+        elif (
+            "Please update the model to fix it based on the provided feedback."
+            in cut_convo[-1]["content"]
+        ):
+            cut_convo.pop()
+        else:
+            break
+    if not cut_convo:
+        raise Exception("No valid user message found to cut the conversation!")
+    return cut_convo
 
 
 def model_self_improvement_prompt():

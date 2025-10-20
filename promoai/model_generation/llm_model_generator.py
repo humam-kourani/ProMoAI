@@ -1,8 +1,7 @@
-from powl.objects.obj import POWL
-from powl import convert_to_bpmn, view as view_powl
-
 import pm4py
 from pm4py.util import constants
+from powl import convert_to_bpmn, view as view_powl
+from powl.objects.obj import POWL
 
 from promoai.model_generation import code_extraction
 from promoai.model_generation.model_generation import generate_model
@@ -90,6 +89,7 @@ class LLMProcessModelGenerator:
             )
         bpmn_model = self.get_bpmn()
         from pm4py.objects.bpmn.exporter import exporter
+
         exporter.apply(bpmn_model, file_path, parameters={"encoding": encoding})
 
     def export_petri_net(
