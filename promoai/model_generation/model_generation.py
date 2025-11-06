@@ -9,6 +9,7 @@ from promoai.model_generation.code_extraction import (
 )
 from promoai.model_generation.validation import (
     validate_partial_orders_with_missing_transitive_edges,
+    validate_resource_structure,
 )
 
 
@@ -23,6 +24,7 @@ def extract_model_from_response(
     result = result.simplify()
     # validate_unique_transitions(result)
     validate_partial_orders_with_missing_transitive_edges(result)
+    validate_resource_structure(result)
     return extracted_code, result
 
 

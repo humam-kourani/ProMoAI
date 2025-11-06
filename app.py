@@ -89,6 +89,15 @@ def run_app():
             description = st.text_area(
                 "For **process modeling**, enter the process description:"
             )
+            discover_pools_and_lanes = st.radio(
+                "Discover Pools and Lanes?",
+                options=["Yes", "No"],
+                index=1,
+                help="If set to Yes, the generated process model will include pools and lanes based on the roles mentioned in the description.",
+            )
+            st.session_state["discover_pools_and_lanes"] = (
+                discover_pools_and_lanes == "Yes"
+            )
             submit_button = st.form_submit_button(label="Run")
             if submit_button:
                 try:

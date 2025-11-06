@@ -2,6 +2,32 @@ from typing import List as TList, Union
 
 from powl.objects.obj import POWL, SilentTransition, StrictPartialOrder, Transition
 
+def validate_resource_structure(powl: POWL):
+    identified_pools = set()
+    identified_lanes = set()
+    children_to_check = [powl]
+    while children_to_check:
+        current_node = children_to_check.pop()
+        if hasattr(current_node, "pool"):
+            identified_pools.add(current_node.pool)
+        if hasattr(current_node, "lane"):
+            identified_lanes.add(current_node.lane)
+        if hasattr(current_node, "children"):
+            children_to_check.extend(current_node.children)
+        try:
+            children = current_node.get_children()
+            children_to_check.extend(children)
+        except AttributeError:
+            pass
+    if None in identified_pools and len(identified_pools) > 1:
+        raise Exception(
+            "Invalid resource structure: None pool used alongside identified pools."
+        )
+    if None in identified_lanes and len(identified_lanes) > 1:
+        raise Exception(
+            "Invalid resource structure: None lane used alongside identified lanes."
+        )
+  
 
 def validate_partial_orders_with_missing_transitive_edges(powl: POWL):
     if isinstance(powl, StrictPartialOrder):

@@ -1,7 +1,7 @@
 import inspect
 from typing import List, Optional
 
-from promoai.prompting.shots import SHOTS
+from promoai.prompting.shots import SHOTS, RESOURCE_AWARE_SHOTS
 
 import_statement = "from promoai.model_generation.generator import ModelGenerator"
 
@@ -37,8 +37,8 @@ def add_role():
     return res
 
 
-def add_knowledge():
-    return (
+def add_knowledge(resource_aware_discovery = False):
+    prompt = (
         "Use the following knowledge about the POWL process modeling language:\n"
         "A POWL model is a hierarchical model. POWL models are recursively generated"
         " by combining submodels into a new model either using a partial order"
@@ -56,9 +56,15 @@ def add_knowledge():
         " variable 'final_model'. Do not try to execute the code, just return it. Assume the class ModelGenerator"
         " is properly implemented and can be imported using the import statement:"
         f" {import_statement}. ModelGenerator provides the functions"
-        " described below:\n"
+        " described below:\n")
+    prompt += (
         " - activity(label) generates an activity. It takes 1 string arguments,"
         " which is the label of the activity.\n"
+    ) if not resource_aware_discovery else (
+        " - activity(label, pool, lane) generates an activity. It takes 3 string arguments,"
+        " which are the label of the activity, the pool name, and the lane name.\n"
+    )
+    prompt += (
         " - partial_order(dependencies) takes 1 argument, which is a list of tuples of submodels. These tuples"
         " set the nodes of the partial order and specify the"
         " edges of the partial order (i.e., the sequential dependencies). The"
@@ -111,7 +117,25 @@ def add_knowledge():
         "IMPORTANT: You can model skippable loops by combining these two functions. For example, "
         "`skip(self_loop(A))` models a skippable loop of A, where A can be executed any number of times, including zero."
     )
+    return prompt
 
+def add_knowledge_about_resources():
+    return (
+        "Additionally, consider the following knowledge about BPMN:\n"
+        "In BPMN, a pool represents a participant in a collaboration."
+        "A pool is used to define the boundaries of that participant's process."
+        "A lane is used to define a distinct role within a pool."
+        "Lanes help to organize and categorize activities within a pool based on the roles or responsibilities of different participants.", 
+        '**Important** Do not generate too specific pool names, use generic ones like "Customer", "Supplier", "System", "Department", etc.\n',
+        "The name of each pool and lane should be derived from the process description.",
+        "Avoid repeating the same pool name for different pools.\n",
+        "Make sure that each lane belongs to only one pool.\n",
+        "Different **departments or roles within the same organization** should be modeled as one pool.\n",
+        "Sometimes, pools and lanes cannot be identified from the process description. In that case, you can assign them to 'None'.\n"
+        "**Important** If you have managed to identify at least one pool, you cannot use 'None' for other pools.\n"
+        "This is valid for lanes as well.\n\n"
+
+    )
 
 def add_process_description(process_description):
     return "This is the process description: " + process_description
@@ -164,13 +188,14 @@ def code_generation():
     )
 
 
-def add_few_shots():
+def add_few_shots(resource_aware_discovery = False):
     res = (
         "Please use few-shots learning. These are few illustrating shots extended with common errors that you"
         " should avoid for each example:\n"
     )
-    for i in range(len(SHOTS)):
-        description, model, errors = SHOTS[i]
+    used_shots = RESOURCE_AWARE_SHOTS if resource_aware_discovery else SHOTS
+    for i in range(len(used_shots)):
+        description, model, errors = used_shots[i]
         full_source = inspect.getsource(model)
         source_lines = full_source.split("\n")
         content_lines = source_lines[1:-2] + ["\n"]
@@ -183,11 +208,13 @@ def add_few_shots():
     return res + "\n"
 
 
-def create_model_generation_prompt(process_description: str) -> str:
+def create_model_generation_prompt(process_description: str, resource_aware_discovery: bool) -> str:
     prompt = add_role()
-    prompt = prompt + add_knowledge()
+    if resource_aware_discovery:
+        prompt = prompt + add_knowledge_about_resources()
+    prompt = prompt + add_knowledge(resource_aware_discovery)
     prompt = prompt + negative_prompting()
-    prompt = prompt + add_few_shots()
+    prompt = prompt + add_few_shots(resource_aware_discovery)
     prompt = prompt + code_generation()
 
     if process_description is not None:
@@ -196,8 +223,8 @@ def create_model_generation_prompt(process_description: str) -> str:
     return prompt
 
 
-def create_conversation(process_description: Optional[str]) -> List[dict[str:str]]:
-    prompt = create_model_generation_prompt(process_description)
+def create_conversation(process_description: Optional[str], resource_aware_discovery: bool) -> List[dict[str:str]]:
+    prompt = create_model_generation_prompt(process_description, resource_aware_discovery=resource_aware_discovery)
     conversation = [{"role": "user", "content": f"{prompt}"}]
     return conversation
 

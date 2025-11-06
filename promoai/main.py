@@ -7,10 +7,10 @@ from promoai.pn_to_powl.converter import convert_workflow_net_to_powl
 
 
 def generate_model_from_text(
-    description: str, api_key: str, ai_model: str, ai_provider: str
+    description: str, api_key: str, ai_model: str, ai_provider: str, resource_aware_discovery : bool = False
 ):
     return LLMProcessModelGenerator.from_description(
-        description, api_key, ai_model, ai_provider
+        description, api_key, ai_model, ai_provider, resource_aware_discovery=resource_aware_discovery
     )
 
 

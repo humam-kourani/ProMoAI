@@ -45,8 +45,8 @@ class ModelGenerator:
         self.copy_duplicates = copy_duplicates
         self.nested_decision_graphs = enable_nested_decision_graphs
 
-    def activity(self, label):
-        return Transition(label)
+    def activity(self, label, pool: str = None, lane: str = None):
+        return Transition(label, pool=pool, lane=lane)
 
     def silent_transition(self):
         return SilentTransition()

@@ -39,7 +39,12 @@ def translate_powl_to_code(powl_obj):
                 code_lines.append(f"{var_name} = None")
             else:
                 label = powl.label
-                code_lines.append(f"{var_name} = gen.activity('{label}')")
+                if powl.pool is not None and powl.lane is not None:
+                    code_lines.append(
+                        f"{var_name} = gen.activity('{label}', pool='{powl.pool}', lane='{powl.lane}')"
+                    )
+                else:
+                    code_lines.append(f"{var_name} = gen.activity('{label}')")
             return var_name
 
         elif isinstance(powl, StartNode) or isinstance(powl, EndNode):
