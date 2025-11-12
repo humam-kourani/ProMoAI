@@ -14,6 +14,8 @@ from pm4py.visualization.bpmn import visualizer as bpmn_visualizer
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
 from powl import convert_to_bpmn, import_event_log
 from powl.conversion.variants.to_petri_net import apply as convert_to_petri_net
+from powl.conversion.variants.to_bpmn_with_resources import apply as to_bpmn_with_resources
+from promoai.model_generation.code_extraction import extract_resources_from_code
 from promoai.general_utils.ai_providers import (
     AI_HELP_DEFAULTS,
     AI_MODEL_DEFAULTS,
@@ -106,14 +108,15 @@ def run_app():
                         api_key=api_key,
                         ai_model=ai_model_name,
                         ai_provider=provider,
+                        resource_aware_discovery=st.session_state["discover_pools_and_lanes"]
                     )
 
                     st.session_state["model_gen"] = process_model
                     st.session_state["feedback"] = []
+
                 except Exception as e:
                     st.error(body=str(e), icon="⚠️")
                     return
-
         elif input_type == InputType.DATA.value:
             uploaded_log = st.file_uploader(
                 "For **process model discovery**, upload an event log:",
@@ -251,9 +254,12 @@ def run_app():
                 bpmn = convert_to_bpmn(powl)
                 download_1, download_2 = st.columns(2)
                 with download_1:
+                    if st.session_state["discover_pools_and_lanes"]:
+                        print(f"Identified pools and lanes: {extract_resources_from_code(process_model_obj.get_code())}")
                     bpmn_data = get_xml_string(
                         bpmn, parameters={"encoding": constants.DEFAULT_ENCODING}
-                    )
+                    ) if not st.session_state["discover_pools_and_lanes"] else \
+                          to_bpmn_with_resources(extract_resources_from_code(process_model_obj.get_code()), powl)
                     st.download_button(
                         label="Download BPMN",
                         data=bpmn_data,

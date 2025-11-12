@@ -1,1 +1,1 @@
-ENABLE_PRINTS = False
+ENABLE_PRINTS = True

@@ -39,12 +39,12 @@ def r_m1():
     return final_model
 def m1():
     gen = ModelGenerator()
-    a = gen.activity("a", pool = None, lane = None)
+    a = gen.activity("a", pool =  None, lane = None)
     a_copy = gen.copy(a)
     a_looped = gen.self_loop(a)
-    b = gen.activity("b", pool = None, lane = None)
-    c = gen.activity("c", pool = None, lane = None)
-    d = gen.activity("d", pool = None, lane = None)
+    b = gen.activity("b", pool =  None, lane = None)
+    c = gen.activity("c", pool =  None, lane = None)
+    d = gen.activity("d", pool =  None, lane = None)
     seq_c_d = gen.partial_order(dependencies=[(c, d)])
     skippable_c_d = gen.skip(seq_c_d)
     dg = gen.decision_graph(
@@ -67,7 +67,10 @@ e1 = (
     " Another common error is not to mark the sequence c -> d as skippable."
 )
 
-r_e1 = e1 + (
+r_e1 = (
+    "a common error for this process is to add a dependency 'd -> a' without creating a"
+    " copy of 'a'. This would imply that the whole process can be executed once again, which is not stated in the description."
+    " Another common error is not to mark the sequence c -> d as skippable."
     "Lanes and pools cannot be assigned properly in this case, as there are no roles or organizations mentioned in the description."
 )
 
@@ -243,17 +246,17 @@ d5 = (
 
 def r_m5():
     gen = ModelGenerator()
-    defect_check = gen.activity("Check defect", pool = "Repairment Service", lane = "Customer Repair Specialist")
-    cost_calculation = gen.activity("Calculate repair costs", pool = "Repairment Service", lane = "Customer Repair Specialist")
-    cancel = gen.activity("Cancel", pool = "Customer", lane = "Customer")
-    return_computer = gen.activity("Give computer unrepaired", pool = "Repairment Service", lane = "Customer Repair Specialist")
-    repair_hardware = gen.activity("Check and repair the hardware", pool = "Repairment Service", lane = "Customer Repair Specialist")
-    repair_software = gen.activity("Check and configure the software", pool = "Repairment Service", lane = "Customer Repair Specialist")
-    test_functionality_after_hardware_repair = gen.activity("Test system functionality", pool = "Repairment Service", lane = "Customer Repair Specialist")
-    test_functionality_after_software_repair = gen.activity("Test system functionality", pool = "Repairment Service", lane = "Customer Repair Specialist")
-    additional_hardware_repair = gen.activity("Perform additional hardware repairs", pool = "Repairment Service", lane = "Customer Repair Specialist")
+    defect_check = gen.activity("Check defect", pool =  "Repairment Service", lane = "Customer Repair Specialist")
+    cost_calculation = gen.activity("Calculate repair costs", pool =  "Repairment Service", lane = "Customer Repair Specialist")
+    cancel = gen.activity("Cancel", pool =  "Customer", lane = "Customer")
+    return_computer = gen.activity("Give computer unrepaired", pool =  "Repairment Service", lane = "Customer Repair Specialist")
+    repair_hardware = gen.activity("Check and repair the hardware", pool =  "Repairment Service", lane = "Customer Repair Specialist")
+    repair_software = gen.activity("Check and configure the software", pool =  "Repairment Service", lane = "Customer Repair Specialist")
+    test_functionality_after_hardware_repair = gen.activity("Test system functionality", pool =  "Repairment Service", lane = "Customer Repair Specialist")
+    test_functionality_after_software_repair = gen.activity("Test system functionality", pool =  "Repairment Service", lane = "Customer Repair Specialist")
+    additional_hardware_repair = gen.activity("Perform additional hardware repairs", pool =  "Repairment Service", lane = "Customer Repair Specialist")
     skippable_repair_after_hardware_repair = gen.skip(additional_hardware_repair)
-    additional_software_repair = gen.activity("Perform additional software repairs", pool = "Repairment Service", lane = "Customer Repair Specialist")
+    additional_software_repair = gen.activity("Perform additional software repairs", pool =  "Repairment Service", lane = "Customer Repair Specialist")
     skippable_repair_after_software_repair = gen.skip(additional_software_repair)
     finish_repair = gen.activity("Finish repair")
     partial_order_repairs = gen.partial_order(
@@ -336,7 +339,11 @@ e5 = (
     " modeling a choice between 'cancel' and the rest of the process. Additionally, a common mistake is to integrate the partial order into the decision graph."
 )
 
-r_e5 = e5 + (
+r_e5 = (
+    "a common error for this process is to create partial orders for some subprocesses, then trying to add a"
+    " partial order as a child of another partial order. Another very important error you should avoid is to"
+    " create a local choice between 'cancel' and some local activity (e.g., 'continue process') instead of"
+    " modeling a choice between 'cancel' and the rest of the process. Additionally, a common mistake is to integrate the partial order into the decision graph."
     'Only two pools should be used: "Repairment Service" and "Customer". The "Repairment Service" pool should contain the lane "Customer Repair Specialist", while the "Customer" pool should contain the lane "Customer".'
 )
 
@@ -355,18 +362,18 @@ d6 = (
 
 def r_m6():
     gen = ModelGenerator()
-    create_process = gen.activity("Create process instance", pool = "Bike manufacturing Company", lane = "Sales Department")
-    reject_order = gen.activity("Reject order", pool = "Bike manufacturing Company", lane = "Sales Department")
-    accept_order = gen.activity("Accept order", pool = "Bike manufacturing Company", lane = "Sales Department")
-    inform = gen.activity("Inform storehouse and engineering department", pool = "Bike manufacturing Company", lane = "Sales Department")
-    process_part_list = gen.activity("Process part list", pool = "Bike manufacturing Company", lane = "Storehouse")
-    check_part = gen.activity("Check required quantity of the part", pool = "Bike manufacturing Company", lane = "Storehouse")
-    reserve = gen.activity("Reserve part", pool = "Bike manufacturing Company", lane = "Storehouse")
-    back_order = gen.activity("Back-order part", pool = "Bike manufacturing Company", lane = "Storehouse")
-    prepare_assembly = gen.activity("Prepare bicycle assembly", pool = "Bike manufacturing Company", lane = "Engineering Department")
-    assemble_bicycle = gen.activity("Assemble bicycle", pool = "Bike manufacturing Company", lane = "Engineering Department")
-    ship_bicycle = gen.activity("Ship bicycle", pool = "Bike manufacturing Company", lane = "Sales Department")
-    finish_process = gen.activity("Finish process instance", pool = "Bike manufacturing Company", lane = "Sales Department")
+    create_process = gen.activity("Create process instance", pool =  "Bike manufacturing Company", lane = "Sales Department")
+    reject_order = gen.activity("Reject order", pool =  "Bike manufacturing Company", lane = "Sales Department")
+    accept_order = gen.activity("Accept order", pool =  "Bike manufacturing Company", lane = "Sales Department")
+    inform = gen.activity("Inform storehouse and engineering department", pool =  "Bike manufacturing Company", lane = "Sales Department")
+    process_part_list = gen.activity("Process part list", pool =  "Bike manufacturing Company", lane = "Storehouse")
+    check_part = gen.activity("Check required quantity of the part", pool =  "Bike manufacturing Company", lane = "Storehouse")
+    reserve = gen.activity("Reserve part", pool =  "Bike manufacturing Company", lane = "Storehouse")
+    back_order = gen.activity("Back-order part", pool =  "Bike manufacturing Company", lane = "Storehouse")
+    prepare_assembly = gen.activity("Prepare bicycle assembly", pool =  "Bike manufacturing Company", lane = "Engineering Department")
+    assemble_bicycle = gen.activity("Assemble bicycle", pool =  "Bike manufacturing Company", lane = "Engineering Department")
+    ship_bicycle = gen.activity("Ship bicycle", pool =  "Bike manufacturing Company", lane = "Sales Department")
+    finish_process = gen.activity("Finish process instance", pool =  "Bike manufacturing Company", lane = "Sales Department")
 
     part_subprocess = gen.decision_graph(
         dependencies=[
@@ -451,7 +458,7 @@ def m6():
 
 
 e6 = "a common error is not to create a partial order for the concurrency between the part handling subprocess and the preparation of the assembly."
-r_e6 = e6 + (
+r_e6 = ("a common error is not to create a partial order for the concurrency between the part handling subprocess and the preparation of the assembly."
     'There is exactly one organization here: "Bike manufacturing Company". There are three lanes: "Sales Department", "Storehouse", and "Engineering Department". Splitting each lane into a different pool is a common mistake.'
 )
 d7 = (
@@ -581,15 +588,15 @@ d10 = ("A process for equipment repair and maintenance service is observed."
 
 def r_m10():
     gen = ModelGenerator()
-    send_machine = gen.activity("SendMachine", pool = "Customer", lane = "Customer")
-    register_repair = gen.activity("RegisterRepair", pool = "RepairService", lane = "Customer Service")
-    analyze_defects = gen.activity("AnalyzeDefects", pool = "RepairService", lane = "Technicians")
-    check_warranty = gen.activity("CheckWarranty", pool = "RepairService", lane = "Customer Service")
-    dismantle_machine = gen.activity("DismantleMachine", pool = "RepairService", lane = "Technicians")
-    repair_part = gen.activity("RepairPart", pool = "RepairService", lane = "Technicians")
+    send_machine = gen.activity("SendMachine", pool =  "Customer", lane = "Customer")
+    register_repair = gen.activity("RegisterRepair", pool =  "RepairService", lane = "Customer Service")
+    analyze_defects = gen.activity("AnalyzeDefects", pool =  "RepairService", lane = "Technicians")
+    check_warranty = gen.activity("CheckWarranty", pool =  "RepairService", lane = "Customer Service")
+    dismantle_machine = gen.activity("DismantleMachine", pool =  "RepairService", lane = "Technicians")
+    repair_part = gen.activity("RepairPart", pool =  "RepairService", lane = "Technicians")
     repair_part_loop = gen.self_loop(repair_part)
-    order_machine = gen.activity("OrderMachine", pool = "RepairService", lane = "Customer Service")
-    ship_back = gen.activity("ShipBack", pool = "RepairService", lane = "Shipping Department")
+    order_machine = gen.activity("OrderMachine", pool =  "RepairService", lane = "Customer Service")
+    ship_back = gen.activity("ShipBack", pool =  "RepairService", lane = "Shipping Department")
     decision_repair_or_order = gen.decision_graph(
         dependencies=[
             (None, dismantle_machine),

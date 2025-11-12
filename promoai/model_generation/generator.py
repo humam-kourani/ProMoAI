@@ -46,7 +46,7 @@ class ModelGenerator:
         self.nested_decision_graphs = enable_nested_decision_graphs
 
     def activity(self, label, pool: str = None, lane: str = None):
-        return Transition(label, pool=pool, lane=lane)
+        return Transition(label, organization=pool, role=lane)
 
     def silent_transition(self):
         return SilentTransition()

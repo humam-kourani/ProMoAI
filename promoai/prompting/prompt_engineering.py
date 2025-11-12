@@ -57,15 +57,16 @@ def add_knowledge(resource_aware_discovery = False):
         " is properly implemented and can be imported using the import statement:"
         f" {import_statement}. ModelGenerator provides the functions"
         " described below:\n")
-    prompt += (
-        " - activity(label) generates an activity. It takes 1 string arguments,"
+    prompt = (
+        prompt + " - activity(label) generates an activity. It takes 1 string arguments,"
         " which is the label of the activity.\n"
     ) if not resource_aware_discovery else (
+        prompt +
         " - activity(label, pool, lane) generates an activity. It takes 3 string arguments,"
-        " which are the label of the activity, the pool name, and the lane name.\n"
+        " which are the label of the activity, the pool name, and the lane name."
     )
-    prompt += (
-        " - partial_order(dependencies) takes 1 argument, which is a list of tuples of submodels. These tuples"
+    prompt = (
+        prompt + " - partial_order(dependencies) takes 1 argument, which is a list of tuples of submodels. These tuples"
         " set the nodes of the partial order and specify the"
         " edges of the partial order (i.e., the sequential dependencies). The"
         " transitive closure of the added dependencies should conform with the irreflexivity"
@@ -125,15 +126,16 @@ def add_knowledge_about_resources():
         "In BPMN, a pool represents a participant in a collaboration."
         "A pool is used to define the boundaries of that participant's process."
         "A lane is used to define a distinct role within a pool."
-        "Lanes help to organize and categorize activities within a pool based on the roles or responsibilities of different participants.", 
-        '**Important** Do not generate too specific pool names, use generic ones like "Customer", "Supplier", "System", "Department", etc.\n',
-        "The name of each pool and lane should be derived from the process description.",
-        "Avoid repeating the same pool name for different pools.\n",
-        "Make sure that each lane belongs to only one pool.\n",
-        "Different **departments or roles within the same organization** should be modeled as one pool.\n",
+        "Lanes help to organize and categorize activities within a pool based on the roles or responsibilities of different participants."
+        """**Important** Do not generate too specific pool names, use generic ones like "Customer", "Supplier", "System", "Department", etc.\n"""
+        "The name of each pool and lane should be derived from the process description."
+        "Avoid repeating the same pool name for different pools.\n"
+        "Make sure that each lane belongs to only one pool.\n"
+        "Different **departments or roles within the same organization** should be modeled as one pool.\n"
         "Sometimes, pools and lanes cannot be identified from the process description. In that case, you can assign them to 'None'.\n"
         "**Important** If you have managed to identify at least one pool, you cannot use 'None' for other pools.\n"
-        "This is valid for lanes as well.\n\n"
+        "This is valid for lanes as well.\n"
+        "IMPORTANT: DO NOT assign names to pools and lanes using variables, e.g., university_pool = 'University'. Always use string literals IN THE FUNCTION CALLS, e.g., pool='University'.\n"
 
     )
 
