@@ -41,7 +41,7 @@ def translate_powl_to_code(powl_obj):
                 label = powl.label
                 if powl.pool is not None and powl.lane is not None:
                     code_lines.append(
-                        f"{var_name} = gen.activity('{label}', pool='{powl.pool}', lane='{powl.lane}')"
+                        f"{var_name} = gen.activity('{label}', organization='{powl.pool}',  role='{powl.lane}')"
                     )
                 else:
                     code_lines.append(f"{var_name} = gen.activity('{label}')")
