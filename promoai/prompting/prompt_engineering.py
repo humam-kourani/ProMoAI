@@ -123,14 +123,14 @@ def add_knowledge(resource_aware_discovery = False):
 def add_knowledge_about_resources():
     return (
         "Additionally, consider the following knowledge about pools and lanes:\n"
-        "A pool is used to define the boundaries of that participant's process."
+        "An activity may be assigned to a pool and a lane. A pool is used to define the boundaries of that participant's process. It typically refers to an organization."
         "A lane is used to define a distinct role within a pool."
         "Lanes help to organize and categorize activities within a pool based on the roles or responsibilities of different participants."
         """**Important** Do not generate too specific pool names, use generic ones like "Customer", "Supplier", "System", "Department", etc.\n"""
         "The name of each pool and lane should be derived from the process description."
         "Avoid repeating the same pool name for different pools.\n"
         "Make sure that each lane belongs to only one pool.\n"
-        "Different **departments or roles within the same organization** should be modeled as one pool.\n"
+        "Different **departments or roles within the same organization** should be modeled as lanes within one single pool.\n"
         "Sometimes, pools and lanes cannot be identified from the process description. In that case, you can assign them to 'None'.\n"
         "**Important** If you have managed to identify at least one pool, you cannot use 'None' for other pools.\n"
         "This is valid for lanes as well.\n"
