@@ -98,11 +98,34 @@ def m1_2():
     return final_model
 
 
+def r_m1_2():
+    gen = ModelGenerator()
+    a = gen.activity("a", pool =  None, lane = None)
+    a_looped = gen.self_loop(a)
+    b = gen.activity("b", pool =  None, lane = None)
+    c = gen.activity("c", pool =  None, lane = None)
+    d = gen.activity("d", pool =  None, lane = None)
+    final_model = gen.decision_graph(
+        dependencies=[
+            (None, a_looped),
+            (None, b),
+            (a_looped, c),
+            (b, c),
+            (c, d),
+            (d, a_looped),
+            (d, None),
+        ]
+    )
+    return final_model
+
+
 e1_2 = (
     "A common error for this process is to create a copy of 'a' instead of looping back. Another "
     "common mistake here would be to break the process into separable parts, e.g., partial order expressing (c,d)."
     "This is not necessary, as decision graphs can express simple sequential dependencies."
 )
+
+r_e1_2 = e1_2 + " Another common error is to assign lanes and pools as there are no roles or organizations mentioned in the description."
 
 d2 = (
     "inventory management can proceed through restocking items or fulfilling orders. Restocking can be performed as "
@@ -138,10 +161,36 @@ def m2():
     return final_model
 
 
+def r_m2():
+    gen = ModelGenerator()
+    restock = gen.self_loop(gen.activity("restock items", pool =  None, lane = None))
+    fulfil = gen.activity("fulfill orders", pool =  None, lane = None)
+    urgent_restock = gen.activity("urgent restock", pool =  None, lane = None)
+    inventory_audit = gen.activity("inventory audit", pool =  None, lane = None)
+    data_analysis = gen.activity("data analysis", pool =  None, lane = None)
+    dg = gen.decision_graph(
+        dependencies=[
+            (None, restock),
+            (None, fulfil),
+            (None, urgent_restock),
+            (restock, inventory_audit),
+            (fulfil, inventory_audit),
+            (urgent_restock, inventory_audit),
+            (inventory_audit, data_analysis),
+            (inventory_audit, None),
+            (data_analysis, None),
+        ]
+    )
+    final_model = gen.skip(gen.self_loop(dg))
+    return final_model
+
+
 e2 = (
     "a common error for this process is to copy 'inventory_audit'. Another common error is to create a partial order for"
     " sequential dependencies that can be expressed via the decision graph. Additionally, a common mistake is to omit the self-loop on 'restock items' or on the whole process."
 )
+
+r_e2 = e2 + " Another common error is to assign lanes and pools as there are no roles or organizations mentioned in the description."
 
 d3 = (
     "This enhanced payroll process allows for a high degree of customization and adaptation to specific "
@@ -168,12 +217,31 @@ def m3():
     return final_model
 
 
+def r_m3():
+    gen = ModelGenerator()
+    track_time = gen.activity("track time", pool =  None, lane = None)
+    track_time_looped = gen.self_loop(track_time)
+    activity_2 = gen.activity("calculate pay", pool =  None, lane = None)
+    activity_3 = gen.activity("issue payments", pool =  None, lane = None)
+    activity_4 = gen.activity("generate reports", pool =  None, lane = None)
+    final_model = gen.partial_order(
+        dependencies=[
+            (track_time_looped, activity_2),
+            (activity_2, activity_3),
+            (activity_2, activity_4),
+        ]
+    )
+    return final_model
+
+
 e3 = (
     "a common error for this process is to model a choice between activity_3 and activity_4 instead of the"
     " concurrency. Additionally, a common mistake is to try to model the final model as a decision graph instead"
     " of a partial order. This is not possible here, as decision graphs cannot express the concurrency between"
     " activity_3 and activity_4."
 )
+
+r_e3 = e3 + " Another common error is to assign lanes and pools as there are no roles or organizations mentioned in the description."
 
 d4 = (
     "This system combines 4 parallel subprocesses, i.e., that are executed independently/at the same time. The first "
@@ -225,11 +293,54 @@ def m4():
     return final_model
 
 
+def r_m4():
+    gen = ModelGenerator()
+
+    # subprocess 1
+    a = gen.activity("a", pool =  None, lane = None)
+    b = gen.activity("b", pool =  None, lane = None)
+    c = gen.activity("c", pool =  None, lane = None)
+    d = gen.activity("d", pool =  None, lane = None)
+    choice_c_d = gen.decision_graph(
+        dependencies=[(None, c), (None, d), (c, None), (d, None)]
+    )
+
+    # subprocess 2
+    e = gen.activity("e", pool =  None, lane = None)
+    unskippable_self_loop_e = gen.self_loop(e)
+
+    # subprocess 3
+    f = gen.activity("f", pool =  None, lane = None)
+    skippable_self_loop_f = gen.skip(gen.self_loop(f))
+
+    # subprocess 4
+    g = gen.activity("g", pool =  None, lane = None)
+    h = gen.activity("h", pool =  None, lane = None)
+    i = gen.activity("i", pool =  None, lane = None)
+    j = gen.activity("j", pool =  None, lane = None)
+
+    # combine all subprocesses
+    final_model = gen.partial_order(
+        dependencies=[
+            (a, b),
+            (b, choice_c_d),
+            (unskippable_self_loop_e,),
+            (skippable_self_loop_f,),
+            (g,),
+            (h, i),
+            (i, j),
+        ]
+    )
+    return final_model
+
+
 e4 = (
     "a common error for this process is to create partial orders for some subprocesses, then trying to add a"
     " partial order as a child of another partial order. Note that the behavior cannot be expressed with one decision graph"
     " because decision graphs cannot express concurrency."
 )
+
+r_e4 = e4 + " Another common error is to assign lanes and pools as there are no roles or organizations mentioned in the description."
 
 d5 = (
     "A customer brings in a defective computer and the CRS checks the defect and hands out a repair cost calculation "
@@ -254,7 +365,7 @@ def r_m5():
     skippable_repair_after_hardware_repair = gen.skip(additional_hardware_repair)
     additional_software_repair = gen.activity("Perform additional software repairs", pool =  "Repairment Service", lane = "Customer Repair Specialist")
     skippable_repair_after_software_repair = gen.skip(additional_software_repair)
-    finish_repair = gen.activity("Finish repair")
+    finish_repair = gen.activity("Finish repair", pool =  "Repairment Service", lane = "Customer Repair Specialist")
     partial_order_repairs = gen.partial_order(
         dependencies=[
             (repair_hardware, test_functionality_after_hardware_repair),
@@ -449,6 +560,8 @@ def m6():
 
 e6 = "a common error is not to create a partial order for the concurrency between the part handling subprocess and the preparation of the assembly."
 r_e6 = e6 + 'There is exactly one organization here: "Bike manufacturing Company". There are three lanes: "Sales Department", "Storehouse", and "Engineering Department". Splitting each lane into a different pool is a common mistake.'
+
+
 d7 = (
     "A and B can happen in any order (concurrent). C and D can happen in any order. A precedes both C and D. B "
     "precedes D"
@@ -464,6 +577,15 @@ def m7():
     final_model = gen.partial_order(dependencies=[(a, c), (a, d), (b, d)])
     return final_model
 
+def r_m7():
+    gen = ModelGenerator()
+    a = gen.activity("A", pool =  None, lane = None)
+    b = gen.activity("B", pool =  None, lane = None)
+    c = gen.activity("C", pool =  None, lane = None)
+    d = gen.activity("D", pool =  None, lane = None)
+    final_model = gen.partial_order(dependencies=[(a, c), (a, d), (b, d)])
+    return final_model
+
 
 e7 = (
     "a common error for this process is to generate a first partial order for modeling the concurrency between"
@@ -472,6 +594,8 @@ e7 = (
     " one. This behavior is not justified and it will imply a wrong dependency ('B' -> 'C'); 'B' and 'C' should"
     " remain independent in the correct partial order."
 )
+r_e7 = e7 + " Another common error is to assign lanes and pools as there are no roles or organizations mentioned in the description."
+
 
 d8 = "A followed by B or C. Then D or G. A can be followed by G. Optionally, after A, we can skip all other activities."
 
@@ -501,8 +625,34 @@ def m8():
     )
     return final_model
 
+def r_m8():
+    gen = ModelGenerator()
+
+    a = gen.activity("A", pool =  None, lane = None)
+    b = gen.activity("B", pool =  None, lane = None)
+    c = gen.activity("C", pool =  None, lane = None)
+    d = gen.activity("D", pool =  None, lane = None)
+    g = gen.activity("G", pool =  None, lane = None)
+    final_model = gen.decision_graph(
+        dependencies=[
+            (None, a),
+            (a, b),
+            (a, g),
+            (a, c),
+            (b, d),
+            (b, g),
+            (c, g),
+            (c, d),
+            (d, None),
+            (g, None),
+            (a, None),
+        ]
+    )
+    return final_model
+
 
 e8 = "A common error for this process is to include useless partial order structures instead of using one decision graph to model the whole behavior."
+r_e8 = e8 + " Another common error is to assign lanes and pools as there are no roles or organizations mentioned in the description."
 
 d9 = (
     "The process starts with checking part stock availability.",
@@ -550,12 +700,50 @@ def m9():
     return final_model
 
 
+def r_m9():
+    gen = ModelGenerator()
+
+    check_part = gen.activity("Check production schedule", pool =  None, lane = None)
+    schedule_part = gen.activity("Schedule production", pool =  None, lane = None)
+    prod_part = gen.activity("Produce machines", pool =  None, lane = None)
+    ship_part = gen.activity("Ship machines", pool =  None, lane = None)
+    production_block = gen.partial_order(
+        dependencies=[
+            (check_part, schedule_part),
+            (schedule_part, prod_part),
+            (prod_part, ship_part),
+        ]
+    )
+
+    check_stock = gen.activity("Check part stock availability", pool =  None, lane = None)
+    cancel = gen.activity("Cancel order", pool =  None, lane = None)
+    notify_email = gen.activity("Notify via email", pool =  None, lane = None)
+    notify_system = gen.activity("Notify via system", pool =  None, lane = None)
+
+    final_model = gen.decision_graph(
+        dependencies=[
+            (None, check_stock),
+            (check_stock, cancel),
+            (check_stock, production_block),
+            (cancel, notify_email),
+            (production_block, notify_email),
+            (production_block, notify_system),
+            (notify_email, None),
+            (notify_system, None),
+        ]
+    )
+
+    return final_model
+
+
 e9 = (
     "A common mistake here is to model the decision graph as partial orders of exclusive choices."
     "The sub-model containing the decision graph, i.e., the activities for production, cancelling the order, and the notifications"
     "Is a decision graph, as only one of these paths can be executed in the end: either we start with the production, and then choose between one of the two notificaiton methods, or we cancel the order and notify the customer via e-mail."
     "If we model the decision graph as a partial order of exclusive choices, we lose precision, i.e., the model will allow for more than the described behaviour."
 )
+r_e9 = e9 + " Another common error is to assign lanes and pools as there are no roles or organizations mentioned in the description."
+
 
 """
 Machine repairment service, the example is taken from "Activity Instance Identification using Bipartite
@@ -610,52 +798,62 @@ r_e10 = (
     'Additionally, there should be a loop on repair part, as multiple parts might need to be repaired.'
     'Only two pools should be used: "Repairment Service" and "Customer". The "Repairment Service" pool should contain the lanes "Technicians", "Customer Service", and "Shipping Department", while the "Customer" pool should contain the lane "Customer". Splitting each lane into a different pool is a common mistake.'
 )
-d11 = (
-    "This process begins when a customer signs up for a subscription service,"
-    "entering personal and payment information. The system generates an account"
-    ", assigns access, and triggers automated billing cycles."
-    "Throughout the subscription, the customer receives regular updates," 
-    "product enhancements, or renewal notifications. If the customer decides to cancel,"
-    "they submit a cancellation request, which the support team processes. "
-    "Depending on the terms, any refunds or charges are applied." 
-    "The process concludes when the subscription is deactivated by the support team"
-    " and the final account balance is settled."
-)
-def r_m11():
-    gen = ModelGenerator()
-    sign_up = gen.activity("Customer signs up", pool =  "Customer", lane = "Customer")
-    generate_account = gen.activity("Generate account", pool =  "Subscription Service", lane = "System")
-    assign_access = gen.activity("Assign access", pool =  "Subscription Service", lane = "System")
-    trigger_billing = gen.activity("Trigger billing cycle", pool =  "Subscription Service", lane = "System")
-    send_updates = gen.activity("Send updates and notifications", pool =  "Subscription Service", lane = "System")
-    submit_cancellation = gen.activity("Submit cancellation request", pool =  "Customer", lane = "Customer")
-    process_cancellation = gen.activity("Process cancellation", pool =  "Subscription Service", lane = "Support Team")
-    apply_refunds_charges = gen.activity("Apply refunds or charges", pool =  "Subscription Service", lane = "Support Team")
-    deactivate_subscription = gen.activity("Deactivate subscription", pool =  "Subscription Service", lane = "Support Team")
-    settle_final_balance = gen.activity("Settle final account balance", pool =  "Subscription Service", lane = "Support Team")
 
-    billing_loop = gen.self_loop(trigger_billing)
-    update_loop = gen.self_loop(send_updates)
-
-    final_model = gen.partial_order(
-        dependencies=[
-            (sign_up, generate_account),
-            (generate_account, assign_access),
-            (assign_access, billing_loop),
-            (assign_access, update_loop),
-            (update_loop, submit_cancellation),
-            (billing_loop, submit_cancellation),
-            (submit_cancellation, process_cancellation),
-            (process_cancellation, apply_refunds_charges),
-            (apply_refunds_charges, deactivate_subscription),
-            (deactivate_subscription, settle_final_balance),
-        ]
-    )
-    return final_model
-r_e11 = (
-    'A common mistake is to not include loops for the billing cycle and updates/notifications, as these are recurring activities throughout the subscription period.'
-    'Only two pools should be used: "Subscription Service" and "Customer". The "Subscription Service" pool should contain the lanes "System" and "Support Team", while the "Customer" pool should contain the lane "Customer". Putting each lane into a different pool is a common mistake.'
-)
+# d11 = (
+#     "This process begins when a customer signs up for a subscription service,"
+#     "entering personal and payment information. The system generates an account"
+#     ", assigns access, and triggers automated billing cycles."
+#     "Throughout the subscription, the customer receives regular updates,"
+#     "product enhancements, or renewal notifications. If the customer decides to cancel,"
+#     "they submit a cancellation request, which the support team processes. "
+#     "Depending on the terms, any refunds or charges are applied."
+#     "The process concludes when the subscription is deactivated by the support team"
+#     " and the final account balance is settled."
+# )
+# def r_m11():
+#     gen = ModelGenerator()
+#     sign_up = gen.activity("Sign up", pool =  "Customer", lane = "Customer")
+#     generate_account = gen.activity("Generate account", pool =  "Subscription Service", lane = "System")
+#     assign_access = gen.activity("Assign access", pool =  "Subscription Service", lane = "System")
+#     trigger_billing = gen.activity("Trigger billing", pool =  "Subscription Service", lane = "System")
+#     send_updates = gen.activity("Send updates and notifications", pool =  "Subscription Service", lane = "System")
+#     submit_cancellation = gen.activity("Submit cancellation request", pool =  "Customer", lane = "Customer")
+#     process_cancellation = gen.activity("Process cancellation", pool =  "Subscription Service", lane = "Support Team")
+#     apply_refunds_charges = gen.activity("Apply refunds or charges", pool =  "Subscription Service", lane = "Support Team")
+#     deactivate_subscription = gen.activity("Deactivate subscription", pool =  "Subscription Service", lane = "Support Team")
+#     settle_final_balance = gen.activity("Settle final account balance", pool =  "Subscription Service", lane = "Support Team")
+#
+#     billing_loop = gen.self_loop(trigger_billing)
+#     update_loop = gen.self_loop(send_updates)
+#
+#     skip_apply_refunds_charges = gen.skip(apply_refunds_charges)
+#
+#     cancellation_path = gen.skip(gen.partial_order(
+#         dependencies=[
+#             (submit_cancellation, process_cancellation),
+#             (process_cancellation, skip_apply_refunds_charges),
+#             (skip_apply_refunds_charges, settle_final_balance),
+#             (process_cancellation, deactivate_subscription),
+#         ]
+#     ))
+#
+#     final_model = gen.partial_order(
+#         dependencies=[
+#             (sign_up, generate_account),
+#             (generate_account, assign_access),
+#             (assign_access, billing_loop),
+#             (assign_access, update_loop),
+#             (update_loop, cancellation_path),
+#             (billing_loop, cancellation_path),
+#         ]
+#     )
+#
+#
+#     return final_model
+# r_e11 = (
+#     'A common mistake is to not include loops for the billing cycle and updates/notifications, as these are recurring activities throughout the subscription period.'
+#     'Only two pools should be used: "Subscription Service" and "Customer". The "Subscription Service" pool should contain the lanes "System" and "Support Team", while the "Customer" pool should contain the lane "Customer". Putting each lane into a different pool is a common mistake.'
+# )
 
 
 # d7 = "An employee purchases a product or service he requires. For instance , a sales person on a trip rents a car. " \
@@ -728,10 +926,17 @@ SHOTS = [
 ]
 RESOURCE_AWARE_SHOTS = [
     (d1, r_m1, r_e1),
+    (d1_2, r_m1_2, r_e1_2),
+    (d2, r_m2, r_e2),
+    (d3, r_m3, r_e3),
+    (d4, r_m4, r_e4),
     (d5, r_m5, r_e5),
     (d6, r_m6, r_e6),
+    (d7, r_m7, r_e7),
+    (d8, r_m8, r_e8),
+    (d9, r_m9, r_e9),
     (d10, r_m10, r_e10),
-    (d11, r_m11, r_e11),
+    # (d11, r_m11, r_e11),
 ]
 
 if __name__ == "__main__":
