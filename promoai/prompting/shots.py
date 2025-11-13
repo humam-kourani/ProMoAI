@@ -16,10 +16,11 @@ d1 = (
     " execution of 'a' is performed. The whole process is optional and can be skipped."
 )
 
-def r_m1():
+def m1():
     gen = ModelGenerator()
     a = gen.activity("a")
     a_looped = gen.self_loop(a)
+    a_copy = gen.copy(a)
     b = gen.activity("b")
     c = gen.activity("c")
     d = gen.activity("d")
@@ -31,13 +32,13 @@ def r_m1():
             (None, b),
             (a_looped, skippable_c_d),
             (b, skippable_c_d),
-            (skippable_c_d, a),
-            (a, None),
+            (skippable_c_d, a_copy),
+            (a_copy, None),
         ]
     )
     final_model = gen.skip(dg)
     return final_model
-def m1():
+def r_m1():
     gen = ModelGenerator()
     a = gen.activity("a", pool =  None, lane = None)
     a_copy = gen.copy(a)
