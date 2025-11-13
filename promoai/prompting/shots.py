@@ -68,12 +68,7 @@ e1 = (
     " Another common error is not to mark the sequence c -> d as skippable."
 )
 
-r_e1 = (
-    "a common error for this process is to add a dependency 'd -> a' without creating a"
-    " copy of 'a'. This would imply that the whole process can be executed once again, which is not stated in the description."
-    " Another common error is not to mark the sequence c -> d as skippable."
-    "Lanes and pools cannot be assigned properly in this case, as there are no roles or organizations mentioned in the description."
-)
+r_e1 = e1 + " Another common error is to assign lanes and pools as there are no roles or organizations mentioned in the description."
 
 d1_2 = (
     "in this process, you can either do 'a' or 'b'. If 'a' is selected,"
@@ -340,13 +335,7 @@ e5 = (
     " modeling a choice between 'cancel' and the rest of the process. Additionally, a common mistake is to integrate the partial order into the decision graph."
 )
 
-r_e5 = (
-    "a common error for this process is to create partial orders for some subprocesses, then trying to add a"
-    " partial order as a child of another partial order. Another very important error you should avoid is to"
-    " create a local choice between 'cancel' and some local activity (e.g., 'continue process') instead of"
-    " modeling a choice between 'cancel' and the rest of the process. Additionally, a common mistake is to integrate the partial order into the decision graph."
-    'Only two pools should be used: "Repairment Service" and "Customer". The "Repairment Service" pool should contain the lane "Customer Repair Specialist", while the "Customer" pool should contain the lane "Customer".'
-)
+r_e5 = e5 + ' Another common error is to create more pools and lanes. Only two pools should be used: "Repairment Service" and "Customer". The "Repairment Service" pool should contain the lane "Customer Repair Specialist", while the "Customer" pool should contain the lane "Customer".'
 
 d6 = (
     "A small company manufactures customized bicycles. Whenever the sales department receives an order , "
@@ -459,9 +448,7 @@ def m6():
 
 
 e6 = "a common error is not to create a partial order for the concurrency between the part handling subprocess and the preparation of the assembly."
-r_e6 = ("a common error is not to create a partial order for the concurrency between the part handling subprocess and the preparation of the assembly."
-    'There is exactly one organization here: "Bike manufacturing Company". There are three lanes: "Sales Department", "Storehouse", and "Engineering Department". Splitting each lane into a different pool is a common mistake.'
-)
+r_e6 = e6 + 'There is exactly one organization here: "Bike manufacturing Company". There are three lanes: "Sales Department", "Storehouse", and "Engineering Department". Splitting each lane into a different pool is a common mistake.'
 d7 = (
     "A and B can happen in any order (concurrent). C and D can happen in any order. A precedes both C and D. B "
     "precedes D"
