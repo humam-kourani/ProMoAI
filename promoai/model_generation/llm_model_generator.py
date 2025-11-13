@@ -30,7 +30,7 @@ class LLMProcessModelGenerator:
 
     @classmethod
     def from_powl(cls, powl_model: POWL):
-        init_conversation = create_conversation(None)
+        init_conversation = create_conversation(None, resource_aware_discovery=False)
         conversation = list(init_conversation)
         conversation.append(
             {
