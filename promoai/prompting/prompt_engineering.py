@@ -122,8 +122,7 @@ def add_knowledge(resource_aware_discovery = False):
 
 def add_knowledge_about_resources():
     return (
-        "Additionally, consider the following knowledge about BPMN:\n"
-        "In BPMN, a pool represents a participant in a collaboration."
+        "Additionally, consider the following knowledge about pools and lanes:\n"
         "A pool is used to define the boundaries of that participant's process."
         "A lane is used to define a distinct role within a pool."
         "Lanes help to organize and categorize activities within a pool based on the roles or responsibilities of different participants."

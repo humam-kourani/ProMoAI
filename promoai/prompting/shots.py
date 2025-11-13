@@ -610,7 +610,52 @@ r_e10 = (
     'Additionally, there should be a loop on repair part, as multiple parts might need to be repaired.'
     'Only two pools should be used: "Repairment Service" and "Customer". The "Repairment Service" pool should contain the lanes "Technicians", "Customer Service", and "Shipping Department", while the "Customer" pool should contain the lane "Customer". Splitting each lane into a different pool is a common mistake.'
 )
+d11 = (
+    "This process begins when a customer signs up for a subscription service,"
+    "entering personal and payment information. The system generates an account"
+    ", assigns access, and triggers automated billing cycles."
+    "Throughout the subscription, the customer receives regular updates," 
+    "product enhancements, or renewal notifications. If the customer decides to cancel,"
+    "they submit a cancellation request, which the support team processes. "
+    "Depending on the terms, any refunds or charges are applied." 
+    "The process concludes when the subscription is deactivated by the support team"
+    " and the final account balance is settled."
+)
+def r_m11():
+    gen = ModelGenerator()
+    sign_up = gen.activity("Customer signs up", pool =  "Customer", lane = "Customer")
+    generate_account = gen.activity("Generate account", pool =  "Subscription Service", lane = "System")
+    assign_access = gen.activity("Assign access", pool =  "Subscription Service", lane = "System")
+    trigger_billing = gen.activity("Trigger billing cycle", pool =  "Subscription Service", lane = "System")
+    send_updates = gen.activity("Send updates and notifications", pool =  "Subscription Service", lane = "System")
+    submit_cancellation = gen.activity("Submit cancellation request", pool =  "Customer", lane = "Customer")
+    process_cancellation = gen.activity("Process cancellation", pool =  "Subscription Service", lane = "Support Team")
+    apply_refunds_charges = gen.activity("Apply refunds or charges", pool =  "Subscription Service", lane = "Support Team")
+    deactivate_subscription = gen.activity("Deactivate subscription", pool =  "Subscription Service", lane = "Support Team")
+    settle_final_balance = gen.activity("Settle final account balance", pool =  "Subscription Service", lane = "Support Team")
 
+    billing_loop = gen.self_loop(trigger_billing)
+    update_loop = gen.self_loop(send_updates)
+
+    final_model = gen.partial_order(
+        dependencies=[
+            (sign_up, generate_account),
+            (generate_account, assign_access),
+            (assign_access, billing_loop),
+            (assign_access, update_loop),
+            (update_loop, submit_cancellation),
+            (billing_loop, submit_cancellation),
+            (submit_cancellation, process_cancellation),
+            (process_cancellation, apply_refunds_charges),
+            (apply_refunds_charges, deactivate_subscription),
+            (deactivate_subscription, settle_final_balance),
+        ]
+    )
+    return final_model
+r_e11 = (
+    'A common mistake is to not include loops for the billing cycle and updates/notifications, as these are recurring activities throughout the subscription period.'
+    'Only two pools should be used: "Subscription Service" and "Customer". The "Subscription Service" pool should contain the lanes "System" and "Support Team", while the "Customer" pool should contain the lane "Customer". Putting each lane into a different pool is a common mistake.'
+)
 
 
 # d7 = "An employee purchases a product or service he requires. For instance , a sales person on a trip rents a car. " \
@@ -686,6 +731,7 @@ RESOURCE_AWARE_SHOTS = [
     (d5, r_m5, r_e5),
     (d6, r_m6, r_e6),
     (d10, r_m10, r_e10),
+    (d11, r_m11, r_e11),
 ]
 
 if __name__ == "__main__":
