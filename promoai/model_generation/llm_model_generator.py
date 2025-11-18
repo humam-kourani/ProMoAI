@@ -1,6 +1,7 @@
 import pm4py
 from pm4py.util import constants
-from powl import convert_to_bpmn, view as view_powl
+from powl import convert_to_bpmn, convert_to_petri_net, view as view_powl
+
 from powl.objects.obj import POWL
 
 from promoai.model_generation import code_extraction
@@ -53,9 +54,7 @@ class LLMProcessModelGenerator:
         return self.process_model
 
     def get_petri_net(self):
-        from pm4py import convert_to_petri_net
-
-        return convert_to_petri_net(self.process_model)
+        return powl.convert_to_petri_net(self.process_model)
 
     def get_bpmn(self):
         bpmn_model = convert_to_bpmn(self.process_model)
