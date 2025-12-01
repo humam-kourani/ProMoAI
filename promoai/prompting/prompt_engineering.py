@@ -253,12 +253,7 @@ def cut_conversation(
     cut_convo = conversation[: pos + 1]
     # Ensure the last message is from the user and is not feedback
     while cut_convo:
-        if cut_convo[-1]["role"] != "user":
-            cut_convo.pop()
-        elif (
-            "Please update the model to fix it based on the provided feedback."
-            in cut_convo[-1]["content"]
-        ):
+        if cut_convo[-1]["role"] != "user" or cut_convo[-1].get("error", False):
             cut_convo.pop()
         else:
             break
