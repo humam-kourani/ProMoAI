@@ -9,4 +9,4 @@ from promoai.main import (
 )
 
 __name__ = "promoai"
-__version__ = "1.4.1"
+__version__ = "1.4.3"

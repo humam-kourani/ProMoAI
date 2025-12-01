@@ -54,7 +54,7 @@ class LLMProcessModelGenerator:
         return self.process_model
 
     def get_petri_net(self):
-        return powl.convert_to_petri_net(self.process_model)
+        return convert_to_petri_net(self.process_model)
 
     def get_bpmn(self):
         bpmn_model = convert_to_bpmn(self.process_model)
