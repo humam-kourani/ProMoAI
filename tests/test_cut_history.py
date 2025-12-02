@@ -21,7 +21,7 @@ def test_cut_history():
     conversation = [
         {"role": "user", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Hello!"},
-        {"role": "user", "content": "Please update the model to fix it based on the provided feedback.", "error": True},
+        {"role": "user", "content": "Please update the model to fix it based on the provided feedback.", "type": "error"},
         {"role": "assistant", "content": "Hi there! How can I help you?"},
         {"role": "user", "content": "Can you tell me a joke?"},
         {"role": "assistant", "content": "Why did the scarecrow win an award? Because he was outstanding in his field!"},

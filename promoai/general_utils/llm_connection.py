@@ -258,7 +258,7 @@ def generate_result_with_error_handling(
                 + "This is the error"
                 f" message: {error_description}"
             )
-            conversation.append({"role": "user", "content": new_message, "error": True})
+            conversation.append({"role": "user", "content": new_message, "type": "error"})
 
     raise Exception(
         llm_name

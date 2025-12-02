@@ -253,7 +253,7 @@ def cut_conversation(
     cut_convo = conversation[: pos + 1]
     # Ensure the last message is from the user and is not feedback
     while cut_convo:
-        if cut_convo[-1]["role"] != "user" or cut_convo[-1].get("error", False):
+        if cut_convo[-1]["role"] != "user" or cut_convo[-1].get("type", "msg") != "msg":
             cut_convo.pop()
         else:
             break
