@@ -18,7 +18,8 @@ class LLMProcessModelGenerator:
 
     @classmethod
     def from_description(
-        cls, process_description: str, api_key: str, ai_model: str, ai_provider: str, resource_aware_discovery: bool = False
+        cls, process_description: str, api_key: str, ai_model: str, ai_provider: str, resource_aware_discovery: bool = False,
+        llm_args: dict = None,
     ):
         init_conversation = create_conversation(process_description, resource_aware_discovery=resource_aware_discovery)
         code, process_model, conversation = generate_model(
@@ -26,6 +27,7 @@ class LLMProcessModelGenerator:
             api_key=api_key,
             llm_name=ai_model,
             ai_provider=ai_provider,
+            llm_args=llm_args,
         )
         return cls(process_model, conversation)
 
@@ -60,13 +62,14 @@ class LLMProcessModelGenerator:
         bpmn_model = convert_to_bpmn(self.process_model)
         return bpmn_model
 
-    def update(self, feedback: str, api_key: str, ai_model: str, ai_provider: str):
+    def update(self, feedback: str, api_key: str, ai_model: str, ai_provider: str, llm_args: dict = None):
         self.conversation = update_conversation(self.conversation, feedback)
         code, self.process_model, self.conversation = generate_model(
             conversation=self.conversation,
             api_key=api_key,
             llm_name=ai_model,
             ai_provider=ai_provider,
+            llm_args=llm_args,
         )
         self.process_model = self.process_model.simplify()
 

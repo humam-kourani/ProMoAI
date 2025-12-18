@@ -33,6 +33,7 @@ def generate_model(
     api_key: str,
     llm_name: str,
     ai_provider: str,
+    llm_args: dict = None,
     max_iterations=10,
     additional_iterations=5,
 ) -> tuple[str, POWL, list[Any]]:
@@ -42,6 +43,7 @@ def generate_model(
         api_key=api_key,
         llm_name=llm_name,
         ai_provider=ai_provider,
+        llm_args=llm_args,
         max_iterations=max_iterations,
         additional_iterations=additional_iterations,
     )
