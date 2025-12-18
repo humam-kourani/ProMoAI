@@ -7,7 +7,7 @@ import re
 from typing import Any, Callable, List, Optional, Tuple, TypeVar
 
 import cohere  # per colleague change
-import google.generativeai as genai  # per colleague change
+from google import genai  # per colleague change
 
 import requests
 
@@ -296,7 +296,7 @@ def generate_response_with_history(
     """
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}",
+        "Authorization": f"Bearer {api_key}"
     }
 
     messages_payload = [
@@ -317,7 +317,7 @@ def generate_response_with_history(
     api_url = api_url.rstrip("/")
     url = f"{api_url}{endpoint}"
 
-    data = _requests_post(url, headers=headers, json_=payload, timeout_s=(3.05, 60))
+    data = _requests_post(url, headers=headers, json_=payload, timeout_s=(3.05, 120))
 
     if isinstance(data, dict) and data.get("error"):
         logger.warning(
@@ -373,20 +373,18 @@ def generate_response_with_history_google(
         api_key = api_key.strip()
         if not api_key:
             raise Exception("api key not provided")
+        
+        client = genai.Client(api_key=api_key)
 
-        genai.configure(api_key=api_key)
         system_instruction, contents = _to_gemini_contents_and_system(
             conversation_history
         )
 
-        if system_instruction:
-            model = genai.GenerativeModel(
-                model_name=google_model, system_instruction=system_instruction
+        response = client.models.generate_content(
+                model = google_model, contents = contents, system_instruction=system_instruction
+            ) if system_instruction else client.models.generate_content(
+                model = google_model, contents = contents
             )
-        else:
-            model = genai.GenerativeModel(model_name=google_model)
-
-        response = model.generate_content(contents)
 
         try:
             return response.text  # type: ignore[attr-defined]

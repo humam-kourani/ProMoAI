@@ -1,5 +1,6 @@
 import re
 import traceback
+import ast
 
 
 def extract_final_python_code(response_text):
@@ -77,29 +78,69 @@ def execute_code_and_get_variable(code, variable_name):
 
         raise Exception(error_details)
 
-def extract_resources_from_code(code):
-    activity_pattern = re.compile(
-    r"""
-    gen\.activity\(
-        \s*"(?P<activity>[^"]+)"\s*,?
-        (?:
-            \s*pool\s*=\s*(?P<pool>"[^"]+"|None)\s*,?
-            \s*lane\s*=\s*(?P<lane>"[^"]+"|None)\s*,?
-        )?
-    \s*\)
-    """,
-    re.VERBOSE | re.DOTALL,)    
-    resources = {}
-    
-    def _process_kw_arg(value):
-        if value is None or value == 'None':
-            return None
-        return value.strip('"')
 
-    for match in activity_pattern.finditer(code):
-        resources[match.group("activity")] = (
-            _process_kw_arg(match.group("pool")),
-            _process_kw_arg(match.group("lane")),
-        )    
+def extract_resources_from_code(code):
+    """
+    Extract gen.activity calls with their pool and lane.
+
+    Returns:
+        dict: activity_name -> (pool, lane)
+    """
+    tree = ast.parse(code)
+    resources = {}
+    variables = {}
+
+    class ActivityVisitor(ast.NodeVisitor):
+        def visit_Assign(self, node):
+            # var = "value" or var = None
+            if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                var_name = node.targets[0].id
+                variables[var_name] = self.resolve_value(node.value)
+
+            if isinstance(node.value, ast.Call):
+                self.process_call(node.value)
+
+            self.generic_visit(node)
+
+        def visit_Expr(self, node):
+            # Standalone expressions like: gen.activity("A", ...)
+            if isinstance(node.value, ast.Call):
+                self.process_call(node.value)
+            self.generic_visit(node)
+
+        def process_call(self, call):
+            func = call.func
+            if isinstance(func, ast.Attribute) and func.attr == "activity":
+                # Activity name
+                activity_name = None
+                if len(call.args) >= 1:
+                    activity_name = self.resolve_value(call.args[0])
+                if activity_name is None:
+                    return
+                # Positional args (if any)
+                pool_val = None
+                lane_val = None
+                if len(call.args) >= 2:
+                    pool_val = self.resolve_value(call.args[1])
+                if len(call.args) >= 3:
+                    lane_val = self.resolve_value(call.args[2])
+
+                # Override with keyword args if these are provided
+                for kw in call.keywords:
+                    if kw.arg == "pool":
+                        pool_val = self.resolve_value(kw.value)
+                    elif kw.arg == "lane":
+                        lane_val = self.resolve_value(kw.value)
+
+                resources[activity_name] = (pool_val, lane_val)
+
+        def resolve_value(self, node):
+            if isinstance(node, ast.Constant):
+                return node.value
+            elif isinstance(node, ast.Name):
+                return variables.get(node.id, None)
+            return None
+
+    ActivityVisitor().visit(tree)
     return resources
 

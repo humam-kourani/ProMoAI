@@ -8,7 +8,7 @@ dependencies:
   - graphviz
   - pip:
       - pm4py
-      - google-generativeai
+      - google-genai
       - anthropic
       - rustxes
       - setuptools

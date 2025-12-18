@@ -3,7 +3,7 @@ pm4py
 setuptools
 streamlit
 requests
-google-generativeai
+google-genai
 anthropic
 rustxes
 cohere
