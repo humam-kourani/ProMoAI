@@ -78,27 +78,17 @@ def execute_code_and_get_variable(code, variable_name):
         raise Exception(error_details)
 
 def extract_resources_from_code(code):
-    activity_pattern = re.compile(r"""
-        gen\.activity\(
-        \s*\"(?P<activity>[^\"]+)\" 
-        
-        # Start an optional non-capturing group for the pool and lane arguments.
-        (?: 
-            ,\s* # Arguments must be preceded by a comma and optional whitespace
-            
-            # Group the two main patterns together
-            (?:
-                # Pattern 1: Positional arguments (e.g., Hospital, Nurse)
-                (?P<pool_pos>[A-Z_]+)\s*,\s*(?P<lane_pos>[A-Z_]+)
-                |
-                # Pattern 2: Keyword arguments (e.g., pool="Bank", lane=None)
-                pool\s*=\s*(?P<pool_kw>\"[^\"]+\"|None)\s*,\s*
-                lane\s*=\s*(?P<lane_kw>\"[^\"]+\"|None)
-            )
-        )? # The '?' makes the entire pool/lane section optional
-        \s*\) # Match the closing parenthesis
-    """, re.VERBOSE)
-
+    activity_pattern = re.compile(
+    r"""
+    gen\.activity\(
+        \s*"(?P<activity>[^"]+)"\s*,?
+        (?:
+            \s*pool\s*=\s*(?P<pool>"[^"]+"|None)\s*,?
+            \s*lane\s*=\s*(?P<lane>"[^"]+"|None)\s*,?
+        )?
+    \s*\)
+    """,
+    re.VERBOSE | re.DOTALL,)    
     resources = {}
     
     def _process_kw_arg(value):
@@ -107,20 +97,9 @@ def extract_resources_from_code(code):
         return value.strip('"')
 
     for match in activity_pattern.finditer(code):
-        activity = match.group('activity')
-        
-        if match.group('pool_pos') is not None:
-            # Matched positional variables (Pattern 1)
-            pool = match.group('pool_pos')
-            lane = match.group('lane_pos')
-        elif match.group('pool_kw') is not None:
-            # Matched keyword arguments (Pattern 2)
-            pool = _process_kw_arg(match.group('pool_kw'))
-            lane = _process_kw_arg(match.group('lane_kw'))
-        else:
-            # Only the activity name was provided
-            pool, lane = None, None
-            
-        resources[activity] = (pool, lane)
-        
+        resources[match.group("activity")] = (
+            _process_kw_arg(match.group("pool")),
+            _process_kw_arg(match.group("lane")),
+        )    
     return resources
+
