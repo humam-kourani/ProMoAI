@@ -192,6 +192,7 @@ def query_llm(
     api_key: str,
     llm_name: str,
     ai_provider: str,
+    llm_args : Optional[dict] = None,
 ) -> str:
     if ai_provider == AIProviders.GOOGLE.value:
         return generate_response_with_history_google(conversation, api_key, llm_name)
@@ -225,6 +226,7 @@ def query_llm(
             llm_name,
             api_url,
             use_responses_api=use_responses_api_openai,
+            llm_args=llm_args,
         )
 
 
@@ -234,13 +236,14 @@ def generate_result_with_error_handling(
     api_key: str,
     llm_name: str,
     ai_provider: str,
+    llm_args: Optional[dict] = None,
     max_iterations=5,
     additional_iterations=5,
     standard_error_message=ERROR_MESSAGE_FOR_MODEL_GENERATION,
 ) -> tuple[str, any, list[Any]]:
     error_history = []
     for iteration in range(max_iterations + additional_iterations):
-        response = query_llm(conversation, api_key, llm_name, ai_provider)
+        response = query_llm(conversation, api_key, llm_name, ai_provider, llm_args)
         try:
             conversation.append({"role": "assistant", "content": response})
             auto_duplicate = iteration >= max_iterations
@@ -286,6 +289,7 @@ def generate_response_with_history(
     llm_name: str,
     api_url: str,
     use_responses_api: bool = False,
+    llm_args: Optional[dict] = None,
 ) -> str:
     """
     Generates a response from the LLM using the conversation history.
@@ -300,6 +304,8 @@ def generate_response_with_history(
     ]
 
     payload = {"model": llm_name}
+    if llm_args:
+        payload.update(llm_args)
     if use_responses_api:
         payload["input"] = messages_payload
         endpoint = "/responses"
