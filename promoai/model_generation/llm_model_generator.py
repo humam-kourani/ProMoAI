@@ -62,13 +62,14 @@ class LLMProcessModelGenerator:
         bpmn_model = convert_to_bpmn(self.process_model)
         return bpmn_model
 
-    def update(self, feedback: str, api_key: str, ai_model: str, ai_provider: str):
+    def update(self, feedback: str, api_key: str, ai_model: str, ai_provider: str, llm_args: dict = None):
         self.conversation = update_conversation(self.conversation, feedback)
         code, self.process_model, self.conversation = generate_model(
             conversation=self.conversation,
             api_key=api_key,
             llm_name=ai_model,
             ai_provider=ai_provider,
+            llm_args=llm_args,
         )
         self.process_model = self.process_model.simplify()
 

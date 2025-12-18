@@ -305,6 +305,7 @@ def generate_response_with_history(
 
     payload = {"model": llm_name}
     if llm_args:
+        print(f"Using LLM args: {llm_args}")
         payload.update(llm_args)
     if use_responses_api:
         payload["input"] = messages_payload
